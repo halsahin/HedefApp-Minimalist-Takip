@@ -1,33 +1,40 @@
-# Hedef Takip Uygulaması
+# Goal Tracker App
 
-Kişisel hedeflerini takip etmek için geliştirilmiş minimalist bir React Native uygulaması. Günlük hayatta belirlediğin hedefleri kaydet, kategorilere ayır, son tarihleri takip et ve ilerleme notları ekle.
-
----
-
-## Özellikler
-
-- **Hedef Ekleme** — İsim, kategori, bitiş tarihi ve açıklama ile hedef oluştur
-- **Tarih Modu** — Takvimden tarih seç veya "kaç gün sonra" gir
-- **Kategoriler** — Kişisel, Kariyer, Sağlık, Eğitim, Finans, İlişkiler, Hobi
-- **Gelişim Günlüğü** — Her hedef için ilerleme notları tut
-- **Sıralama & Filtreleme** — Kalan güne, tarihe, kategoriye veya isme göre sırala
-- **Sabitleme** — Önemli hedefleri favori olarak üste sabitle
-- **Tamamlama** — Hedefleri tamamlandı olarak işaretle
-- **Kalıcı Depolama** — AsyncStorage ile veriler uygulama kapansa da korunur
-- **Google Ads** — Banner reklam desteği
+A minimalist React Native app for tracking personal goals. Create goals with categories and deadlines, log your progress, and stay on top of what matters.
 
 ---
 
-## Ekran Görüntüleri
+## Screenshots
 
-> *(yakında)*
+> Place your screenshots inside an `assets/screenshots/` folder, then reference them like this:
+
+```md
+![Home Screen](assets/screenshots/home.png)
+![Add Goal](assets/screenshots/add-goal.png)
+![Goal Detail](assets/screenshots/detail.png)
+```
 
 ---
 
-## Teknolojiler
+## Features
 
-| Paket | Versiyon |
-|-------|----------|
+- **Add Goals** — Create goals with a name, category, deadline, and description
+- **Date Mode** — Pick a date from the calendar or enter "how many days from now"
+- **Categories** — Personal, Career, Health, Education, Finance, Relationships, Hobby
+- **Progress Journal** — Add progress notes to each goal
+- **Sort & Filter** — Sort by days remaining, date, category, or name
+- **Pin** — Pin important goals to the top as favorites
+- **Complete** — Mark goals as done
+- **Persistent Storage** — Data is saved with AsyncStorage and survives app restarts
+- **Multi-language** — Supports Turkish, English, Simplified Chinese, Japanese, and Korean
+- **Google Ads** — Banner ad support
+
+---
+
+## Tech Stack
+
+| Package | Version |
+|---------|---------|
 | React Native | 0.81.5 |
 | Expo | ~54.0.33 |
 | React | 19.1.0 |
@@ -37,57 +44,72 @@ Kişisel hedeflerini takip etmek için geliştirilmiş minimalist bir React Nati
 
 ---
 
-## Kurulum
+## Supported Languages
+
+| Code | Language | Script / Notes |
+|------|----------|----------------|
+| `tr` | Turkish | — |
+| `en` | English | — |
+| `zh` | Chinese | Simplified (zh-CN) |
+| `ja` | Japanese | Hiragana, Katakana & Kanji |
+| `ko` | Korean | Hangul |
+
+---
+
+## Getting Started
 
 ```bash
-# Bağımlılıkları yükle
+# Install dependencies
 npm install
 
-# Expo ile başlat
+# Start with Expo
 npx expo start
 
-# Android için
+# Android
 npx expo start --android
 ```
 
-> Android cihaz veya emülatör gerektirir.
+> Requires an Android device or emulator.
 
 ---
 
-## Proje Yapısı
+## Project Structure
 
 ```
 hedefapp/
-├── App.js                          # Ana uygulama, state yönetimi
+├── App.js                          # Root component, state management
 ├── src/
 │   ├── components/
-│   │   ├── AddGoalModal.js         # Hedef ekleme bottom-sheet modal
-│   │   ├── GoalDetailModal.js      # Hedef detay & gelişim günlüğü
-│   │   ├── GoalCard.js             # Liste kartı bileşeni
-│   │   ├── AppHeader.js            # Üst başlık
-│   │   ├── ControlsBar.js          # Sıralama & ekleme kontrolleri
-│   │   ├── FilterTabs.js           # Filtre sekmeleri
-│   │   ├── EmptyState.js           # Boş liste ekranı
-│   │   ├── Toast.js                # Bildirim bileşeni
+│   │   ├── AddGoalModal.js         # Bottom-sheet modal for adding goals
+│   │   ├── GoalDetailModal.js      # Goal detail & progress journal
+│   │   ├── GoalCard.js             # List card component
+│   │   ├── AppHeader.js            # Top header bar
+│   │   ├── ControlsBar.js          # Sort & add controls
+│   │   ├── FilterTabs.js           # Filter tab bar
+│   │   ├── EmptyState.js           # Empty list placeholder
+│   │   ├── Toast.js                # Notification component
 │   │   └── AdBannerComponent.js    # Google Ads banner
 │   ├── hooks/
-│   │   └── useGoals.js             # Tüm hedef state'i & AsyncStorage
+│   │   └── useGoals.js             # Goal state & AsyncStorage logic
+│   ├── i18n/
+│   │   ├── LanguageContext.js      # Language context & provider
+│   │   └── translations.js        # TR, EN, ZH, JA, KO translations
 │   ├── utils/
-│   │   └── dateUtils.js            # Tarih hesaplama yardımcıları
+│   │   └── dateUtils.js            # Date calculation helpers
 │   └── constants/
-│       ├── categories.js           # Kategori listesi
-│       └── theme.js                # Renk & tipografi sabitleri
-└── assets/                         # İkonlar & görseller
+│       ├── categories.js           # Category definitions
+│       └── theme.js                # Colors & typography
+└── assets/                         # Icons & images
 ```
 
 ---
 
-## Yapay Zeka Desteği
+## Built With AI
 
-Bu uygulama **Claude Sonnet 4.6** (Anthropic) ile geliştirilmiştir.
+This app was developed with **Claude Sonnet 4.6** (Anthropic).
 
 ---
 
-## Lisans
+## License
 
 MIT
