@@ -23,6 +23,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.r1cha.hedefApp",
+      "versionCode": 2,
       "allowBackup": true
     },
     "web": {
