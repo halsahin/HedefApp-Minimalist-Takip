@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { Colors } from '../constants/theme';
+// Reklam ID'leri: önce yerel ads.js'i dene (geliştirme ortamı),
+// yoksa EAS Environment Variable'ı kullan (cloud build).
+let ANDROID_AD_UNIT_ID = process.env.EXPO_PUBLIC_ANDROID_AD_UNIT_ID ?? null;
+let IOS_AD_UNIT_ID = process.env.EXPO_PUBLIC_IOS_AD_UNIT_ID ?? null;
+try {
+    const adsConfig = require('../config/ads');
+    if (adsConfig.ANDROID_AD_UNIT_ID) ANDROID_AD_UNIT_ID = adsConfig.ANDROID_AD_UNIT_ID;
+    if (adsConfig.IOS_AD_UNIT_ID) IOS_AD_UNIT_ID = adsConfig.IOS_AD_UNIT_ID;
+} catch { /* ads.js yok (EAS build), env var kullanılıyor */ }
 
 // react-native-google-mobile-ads requires a custom dev build / production build.
 // In Expo Go it is not available, so we lazy-require and fall back gracefully.
@@ -29,17 +38,17 @@ try {
  *      konsoldan aldığınız gerçek Ad Unit ID'leriyle değiştirin.
  *   3. app.json'daki androidAppId / iosAppId alanlarını da güncelleyin.
  */
-const ANDROID_AD_UNIT_ID = process.env.ANDROID_AD_UNIT_ID ?? 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX';
-const IOS_AD_UNIT_ID = TestIds ? TestIds.ADAPTIVE_BANNER : null;
 
 const AD_UNIT_ID = Platform.OS === 'android' ? ANDROID_AD_UNIT_ID : IOS_AD_UNIT_ID;
+
 
 export default function AdBannerComponent() {
     const [hasError, setHasError] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
 
     // Reklam web modunda veya Expo Go'da çalışmaz
-    if (Platform.OS === 'web' || !BannerAd) {
+    // Geçerli bir Ad Unit ID yoksa sessizce gizle (crash önlenir)
+    if (Platform.OS === 'web' || !BannerAd || !AD_UNIT_ID) {
         return <View style={styles.webFallback} />;
     }
 

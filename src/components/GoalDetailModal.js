@@ -7,6 +7,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Typography, Spacing, Radii, Shadows } from '../constants/theme';
 import { CATEGORIES, CATEGORY_ICON_MAP, getCategoryLabel } from '../constants/categories';
 import { calcRemainingDays, formatDate, deadlineFromDays } from '../utils/dateUtils';
+import { addGoalToCalendar } from '../utils/calendar';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -30,6 +31,7 @@ export default function GoalDetailModal({
     const [editDesc, setEditDesc] = useState('');
     const [editProgress, setEditProgress] = useState(0);
     const [editReminderDays, setEditReminderDays] = useState([3, 1]);
+    const [editRecurring, setEditRecurring] = useState(null);
     const [customReminderInput, setCustomReminderInput] = useState('');
     const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -57,6 +59,7 @@ export default function GoalDetailModal({
         setEditDesc(g.description || '');
         setEditProgress(g.progress || 0);
         setEditReminderDays(g.reminderDays ?? [3, 1]);
+        setEditRecurring(g.recurring ?? null);
         setCustomReminderInput('');
     }
 
@@ -70,15 +73,34 @@ export default function GoalDetailModal({
             if (isNaN(d) || d < 1) return;
             deadline = deadlineFromDays(d);
         }
-        onUpdateGoal(goal.id, { name: editName, category: editCategory, deadline, description: editDesc, progress: editProgress, reminderDays: editReminderDays });
+        onUpdateGoal(goal.id, { name: editName, category: editCategory, deadline, description: editDesc, progress: editProgress, reminderDays: editReminderDays, recurring: editRecurring });
         setIsEditingGoal(false);
         Keyboard.dismiss();
     }
 
     function cancelGoalEdit() {
-        setIsEditingGoal(false);
-        setShowDatePicker(false);
-        Keyboard.dismiss();
+        const hasChanges = editName.trim() !== goal.name ||
+            editCategory !== goal.category ||
+            editDesc !== (goal.description || '') ||
+            editProgress !== (goal.progress || 0);
+        if (hasChanges) {
+            Alert.alert(
+                t('detail.cancel'),
+                t('detail.discardChanges') || 'Değişiklikler kaydedilmeyecek. Devam edilsin mi?',
+                [
+                    { text: t('detail.cancel'), style: 'cancel' },
+                    {
+                        text: t('detail.discard') || 'Vazgeç',
+                        style: 'destructive',
+                        onPress: () => { setIsEditingGoal(false); setShowDatePicker(false); Keyboard.dismiss(); },
+                    },
+                ]
+            );
+        } else {
+            setIsEditingGoal(false);
+            setShowDatePicker(false);
+            Keyboard.dismiss();
+        }
     }
 
     function openAddUpdate() {
@@ -132,7 +154,7 @@ export default function GoalDetailModal({
     const formattedEditDate = editDate.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
 
     // Timeline
-    const hasTimeline = goal.startDate && !goal.completed;
+    const hasTimeline = !!(goal.startDate && !goal.completed);
     let timelineProgress = 0;
     if (hasTimeline) {
         const start = new Date(goal.startDate + 'T00:00:00').getTime();
@@ -143,7 +165,7 @@ export default function GoalDetailModal({
 
     return (
         <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-            <KeyboardAvoidingView style={[styles.root, { backgroundColor: colors.bg }]} behavior="padding">
+            <KeyboardAvoidingView style={[styles.root, { backgroundColor: colors.bg }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
                 {/* Top bar */}
                 <View style={[styles.topBar, { borderBottomColor: stripColor, backgroundColor: colors.surface }]}>
@@ -444,6 +466,30 @@ export default function GoalDetailModal({
                                         </Text>
                                     </View>
 
+                                    {/* Takvime Ekle */}
+                                    {!goal.completed && (
+                                        <TouchableOpacity
+                                            style={[styles.calendarBtn, { borderColor: colors.border, backgroundColor: colors.bg }]}
+                                            activeOpacity={0.75}
+                                            onPress={async () => {
+                                                const result = await addGoalToCalendar(goal);
+                                                if (result === 'ok') {
+                                                    Alert.alert('📅', t('calendar.addedToCalendar'));
+                                                } else if (result === 'denied') {
+                                                    Alert.alert('', t('calendar.calendarDenied'));
+                                                } else if (result === 'unavailable') {
+                                                    Alert.alert('', t('calendar.calendarUnavailable'));
+                                                } else {
+                                                    Alert.alert('', t('calendar.calendarError'));
+                                                }
+                                            }}
+                                        >
+                                            <Text style={[styles.calendarBtnText, { color: colors.textMuted }]}>
+                                                {t('calendar.addToCalendar')}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    )}
+
                                     {!!goal.description && (
                                         <View style={[styles.noteBox, { backgroundColor: colors.bg, borderLeftColor: colors.accent }]}>
                                             <Text style={[styles.noteLabel, { color: colors.textMuted }]}>{t('detail.notes')}</Text>
@@ -635,6 +681,14 @@ const styles = StyleSheet.create({
     infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 1 },
     infoLabel: { fontSize: Typography.sm, fontWeight: '500' },
     infoValue: { fontSize: Typography.sm, fontWeight: '700' },
+    calendarBtn: {
+        marginTop: Spacing.md,
+        borderWidth: 1,
+        borderRadius: Radii.sm,
+        paddingVertical: Spacing.sm + 2,
+        alignItems: 'center',
+    },
+    calendarBtnText: { fontSize: Typography.sm, fontWeight: '600' },
     noteBox: { marginTop: Spacing.md, borderRadius: Radii.sm, padding: Spacing.md, borderLeftWidth: 3 },
     noteLabel: { fontSize: Typography.xs, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4 },
     noteText: { fontSize: Typography.sm, lineHeight: 20 },

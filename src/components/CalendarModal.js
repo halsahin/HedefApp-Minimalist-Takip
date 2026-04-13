@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
-    Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet,
+    Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform, StatusBar,
 } from 'react-native';
 import { Spacing, Radii, Typography } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
@@ -175,7 +175,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: Spacing.lg,
-        paddingVertical: Spacing.md,
+        paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + Spacing.md : 44 + Spacing.md,
+        paddingBottom: Spacing.md,
         borderBottomWidth: 1,
     },
     title: { fontSize: Typography.md, fontWeight: '700' },

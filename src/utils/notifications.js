@@ -12,17 +12,30 @@ async function getNotifications() {
 }
 
 function makeTrigger(N, triggerDate, seconds) {
-    // expo-notifications 0.28+ requires explicit type field
+    const CalendarType = N.SchedulableTriggerInputTypes?.CALENDAR;
     const DateType = N.SchedulableTriggerInputTypes?.DATE;
     const IntervalType = N.SchedulableTriggerInputTypes?.TIME_INTERVAL;
 
+    // CALENDAR is the most reliable on Android — uses exact date/time components
+    if (CalendarType) {
+        return {
+            type: CalendarType,
+            year: triggerDate.getFullYear(),
+            month: triggerDate.getMonth() + 1,
+            day: triggerDate.getDate(),
+            hour: triggerDate.getHours(),
+            minute: triggerDate.getMinutes(),
+            second: 0,
+            repeats: false,
+            channelId: 'goal-reminders',
+        };
+    }
     if (DateType) {
         return { type: DateType, date: triggerDate, channelId: 'goal-reminders' };
     }
     if (IntervalType) {
         return { type: IntervalType, seconds, repeats: false, channelId: 'goal-reminders' };
     }
-    // Fallback for older versions
     return { seconds, channelId: 'goal-reminders' };
 }
 
@@ -36,17 +49,18 @@ export async function setupNotifications() {
         N.setNotificationHandler({
             handleNotification: async () => ({
                 shouldShowAlert: true,
-                shouldPlaySound: false,
+                shouldPlaySound: true,
                 shouldSetBadge: false,
             }),
         });
 
-        // Android requires a notification channel
+        // Android requires a notification channel — HIGH importance shows heads-up alerts
         if (N.setNotificationChannelAsync) {
             await N.setNotificationChannelAsync('goal-reminders', {
                 name: 'Goal Reminders',
-                importance: N.AndroidImportance?.DEFAULT ?? 3,
+                importance: N.AndroidImportance?.HIGH ?? 4,
                 vibrationPattern: [0, 250, 250, 250],
+                sound: 'default',
             });
         }
     } catch (err) {

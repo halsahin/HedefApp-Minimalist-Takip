@@ -58,7 +58,24 @@ export default function GoalCard({ goal, onToggleComplete, onTogglePin, onDelete
         onPanResponderRelease: (_, g) => {
             if (g.dx < -SWIPE_THRESHOLD) {
                 Animated.timing(translateX, { toValue: -500, duration: 200, useNativeDriver: true })
-                    .start(() => { translateX.setValue(0); handleDeletePress(); });
+                    .start(() => {
+                        Alert.alert(
+                            t('delete.title'),
+                            t('delete.msg'),
+                            [
+                                {
+                                    text: t('delete.cancel'),
+                                    style: 'cancel',
+                                    onPress: () => { translateX.setValue(0); },
+                                },
+                                {
+                                    text: t('delete.confirm'),
+                                    style: 'destructive',
+                                    onPress: () => { translateX.setValue(0); onDelete(goal.id); },
+                                },
+                            ]
+                        );
+                    });
             } else if (g.dx > SWIPE_THRESHOLD) {
                 Animated.timing(translateX, { toValue: 500, duration: 200, useNativeDriver: true })
                     .start(() => { translateX.setValue(0); onToggleComplete(goal.id); });

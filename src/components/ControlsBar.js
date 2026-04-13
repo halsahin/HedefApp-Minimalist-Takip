@@ -5,10 +5,10 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 
 const SORT_OPTIONS = [
-    { key: 'days',     tKey: 'sort.byDays' },
-    { key: 'date',     tKey: 'sort.byDate' },
+    { key: 'days', tKey: 'sort.byDays' },
+    { key: 'date', tKey: 'sort.byDate' },
     { key: 'category', tKey: 'sort.byCategory' },
-    { key: 'name',     tKey: 'sort.byName' },
+    { key: 'name', tKey: 'sort.byName' },
 ];
 
 export default function ControlsBar({ sortBy, onSortChange, onAddPress }) {
@@ -40,13 +40,13 @@ export default function ControlsBar({ sortBy, onSortChange, onAddPress }) {
                                 <TouchableOpacity
                                     key={opt.key}
                                     style={[styles.dropdownItem,
-                                        opt.key === sortBy && { backgroundColor: colors.accentBg }
+                                    opt.key === sortBy && { backgroundColor: colors.accentBg }
                                     ]}
                                     onPress={() => { onSortChange(opt.key); setOpen(false); }}
                                     activeOpacity={0.75}
                                 >
                                     <Text style={[styles.dropdownText, { color: colors.text },
-                                        opt.key === sortBy && { fontWeight: '700', color: '#5A4800' }
+                                    opt.key === sortBy && { fontWeight: '700', color: '#5A4800' }
                                     ]}>
                                         {t(opt.tKey)}
                                     </Text>
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
     },
     selectorText: { fontSize: Typography.sm, fontWeight: '500' },
-    arrow: { fontSize: 10 },
+    arrow: { fontSize: 14, fontWeight: '700' },
     dropdown: {
         position: 'absolute',
         top: 34,

@@ -3,6 +3,7 @@ import {
   View, StatusBar as RNStatusBar, FlatList,
   StyleSheet, Platform,
 } from 'react-native';
+import Constants from 'expo-constants';
 
 import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { LanguageProvider, useLanguage } from './src/i18n/LanguageContext';
@@ -18,16 +19,34 @@ import GoalDetailModal from './src/components/GoalDetailModal';
 import StatsModal from './src/components/StatsModal';
 import CalendarModal from './src/components/CalendarModal';
 import Toast from './src/components/Toast';
+import SideDrawer from './src/components/SideDrawer';
+import FolderPickerModal from './src/components/FolderPickerModal';
+import CounterModal from './src/components/CounterModal';
+import { useCounterRecords } from './src/hooks/useCounterRecords';
 import AdBannerComponent from './src/components/AdBannerComponent';
+import { useFolders } from './src/hooks/useFolders';
 import {
   setupNotifications,
   scheduleGoalNotifications,
   cancelGoalNotifications,
 } from './src/utils/notifications';
 
-function AppContent() {
+function AppContent({ onRestore }) {
   const { t } = useLanguage();
   const { colors, isDark } = useTheme();
+
+  const {
+    folders,
+    activeFolderId,
+    setActiveFolderId,
+    addFolder,
+    renameFolder,
+    deleteFolder,
+    getLocalizedFolders,
+  } = useFolders();
+
+  const localizedFolders = getLocalizedFolders(t);
+  const activeFolder = localizedFolders.find(f => f.id === activeFolderId) ?? null;
 
   const {
     goals,
@@ -41,6 +60,7 @@ function AppContent() {
     toggleComplete,
     togglePin,
     deleteGoal,
+    moveGoalsToDefaultFolder,
     addUpdate,
     editUpdate,
     deleteUpdate,
@@ -49,13 +69,28 @@ function AppContent() {
     deleteSubtask,
     totalCount,
     dueCount,
-  } = useGoals();
+  } = useGoals(activeFolderId);
+
+  // BUG-14: move goals to default folder before deleting the folder
+  const handleDeleteFolder = useCallback((id) => {
+    moveGoalsToDefaultFolder(id);
+    deleteFolder(id);
+  }, [moveGoalsToDefaultFolder, deleteFolder]);
 
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [detailGoalId, setDetailGoalId] = useState(null);
   const [statsVisible, setStatsVisible] = useState(false);
   const [calendarVisible, setCalendarVisible] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [folderPickerVisible, setFolderPickerVisible] = useState(false);
+  const [counterVisible, setCounterVisible] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
+
+  const {
+    records: counterRecords,
+    addRecord, addNote: addCounterNote, editNote: editCounterNote,
+    deleteNote: deleteCounterNote, deleteRecord,
+  } = useCounterRecords();
 
   const rawGoalsRef = useRef(rawGoals);
   useEffect(() => { rawGoalsRef.current = rawGoals; }, [rawGoals]);
@@ -70,15 +105,16 @@ function AppContent() {
   const showToast = useCallback((msg) => setToastMsg(msg), []);
 
   const handleAddGoal = useCallback((data) => {
-    const newGoal = addGoal(data);
+    const newGoal = addGoal({ ...data, folderId: activeFolderId ?? 'default' });
     scheduleGoalNotifications(newGoal, t);
     showToast(t('toast.goalAdded'));
-  }, [addGoal, showToast, t]);
+  }, [addGoal, showToast, t, activeFolderId]);
 
   const handleToggleComplete = useCallback((id) => {
     const g = rawGoalsRef.current.find(x => x.id === id);
     cancelGoalNotifications(id);
-    toggleComplete(id);
+    const newGoal = toggleComplete(id);
+    if (newGoal) scheduleGoalNotifications(newGoal, t);
     showToast(g?.completed ? t('toast.undone') : t('toast.goalCompleted'));
   }, [toggleComplete, showToast, t]);
 
@@ -142,8 +178,9 @@ function AppContent() {
         <AppHeader
           totalCount={totalCount}
           dueCount={dueCount}
-          onStatsPress={() => setStatsVisible(true)}
-          onCalendarPress={() => setCalendarVisible(true)}
+          onMenuPress={() => setDrawerVisible(true)}
+          folderName={activeFolder?.name ?? t('folder.all')}
+          onFolderPress={() => setFolderPickerVisible(true)}
         />
         <ControlsBar
           sortBy={sortBy}
@@ -202,15 +239,51 @@ function AppContent() {
       />
 
       <Toast message={toastMsg} onHide={() => setToastMsg(null)} />
+
+      <SideDrawer
+        visible={drawerVisible}
+        onClose={() => setDrawerVisible(false)}
+        onStatsPress={() => setStatsVisible(true)}
+        onCalendarPress={() => setCalendarVisible(true)}
+        onCounterPress={() => setCounterVisible(true)}
+        onRestoreSuccess={() => { setDrawerVisible(false); onRestore(); }}
+        folders={localizedFolders}
+        activeFolderId={activeFolderId}
+        onSelectFolder={setActiveFolderId}
+        onManageFolders={() => setFolderPickerVisible(true)}
+      />
+
+      <CounterModal
+        visible={counterVisible}
+        onClose={() => setCounterVisible(false)}
+        records={counterRecords}
+        onAddRecord={addRecord}
+        onAddNote={addCounterNote}
+        onEditNote={editCounterNote}
+        onDeleteNote={deleteCounterNote}
+        onDeleteRecord={deleteRecord}
+      />
+
+      <FolderPickerModal
+        visible={folderPickerVisible}
+        onClose={() => setFolderPickerVisible(false)}
+        folders={localizedFolders}
+        activeFolderId={activeFolderId}
+        onSelectFolder={setActiveFolderId}
+        onAddFolder={addFolder}
+        onRenameFolder={renameFolder}
+        onDeleteFolder={handleDeleteFolder}
+      />
     </View>
   );
 }
 
 export default function App() {
+  const [reloadKey, setReloadKey] = useState(0);
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <AppContent />
+        <AppContent key={reloadKey} onRestore={() => setReloadKey(k => k + 1)} />
       </LanguageProvider>
     </ThemeProvider>
   );
@@ -219,7 +292,7 @@ export default function App() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight : 44,
+    paddingTop: Constants.statusBarHeight ?? (Platform.OS === 'android' ? (RNStatusBar.currentHeight ?? 24) : 44),
   },
   topFixed: {
     flexShrink: 0,

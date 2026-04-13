@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Modal, View, Text, TextInput, TouchableOpacity,
   ScrollView, StyleSheet, Keyboard, Platform,
-  KeyboardAvoidingView, Animated, PanResponder, Dimensions, Alert,
+  KeyboardAvoidingView, Animated, PanResponder, useWindowDimensions, Alert,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Typography, Spacing, Radii, Shadows } from '../constants/theme';
@@ -11,7 +11,6 @@ import { defaultDeadline, deadlineFromDays, generateId } from '../utils/dateUtil
 import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 
-const SCREEN_HEIGHT = Dimensions.get('window').height;
 const SWIPE_CLOSE_THRESHOLD = 80;
 const SWIPE_VELOCITY_THRESHOLD = 0.5;
 
@@ -22,6 +21,7 @@ const REMINDER_OPTIONS = [7, 3, 1, 0];
 export default function AddGoalModal({ visible, onClose, onSubmit }) {
   const { t, locale } = useLanguage();
   const { colors, isDark } = useTheme();
+  const { height: screenHeight } = useWindowDimensions();
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState(CATEGORIES[0].key);
@@ -36,7 +36,7 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
   const [startDate, setStartDate] = useState(null);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [recurringEnabled, setRecurringEnabled] = useState(false);
+  const [goalType, setGoalType] = useState('once'); // 'once' | 'recurring'
   const [recurringType, setRecurringType] = useState('weekly');
   const [recurringInterval, setRecurringInterval] = useState('7');
   const [subtasks, setSubtasks] = useState([]);
@@ -45,7 +45,7 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
   const [customReminderInput, setCustomReminderInput] = useState('');
 
   const nameRef = useRef(null);
-  const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
@@ -60,14 +60,14 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
       setStartDate(null);
       setShowStartDatePicker(false);
       setProgress(0);
-      setRecurringEnabled(false);
+      setGoalType('once');
       setRecurringType('weekly');
       setRecurringInterval('7');
       setSubtasks([]);
       setSubtaskInput('');
       setReminderDays([3, 1]);
       setCustomReminderInput('');
-      translateY.setValue(SCREEN_HEIGHT);
+      translateY.setValue(screenHeight);
       Animated.spring(translateY, {
         toValue: 0,
         useNativeDriver: true,
@@ -109,20 +109,30 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
       return;
     }
     let deadline;
-    if (deadlineMode === 'date') {
-      deadline = [
-        selectedDate.getFullYear(),
-        String(selectedDate.getMonth() + 1).padStart(2, '0'),
-        String(selectedDate.getDate()).padStart(2, '0'),
-      ].join('-');
+    let recurring = null;
+
+    if (goalType === 'once') {
+      if (deadlineMode === 'date') {
+        deadline = [
+          selectedDate.getFullYear(),
+          String(selectedDate.getMonth() + 1).padStart(2, '0'),
+          String(selectedDate.getDate()).padStart(2, '0'),
+        ].join('-');
+      } else {
+        const d = parseInt(daysInput, 10);
+        if (isNaN(d) || d < 1) return;
+        deadline = deadlineFromDays(d);
+      }
     } else {
-      const d = parseInt(daysInput, 10);
-      if (isNaN(d) || d < 1) return;
-      deadline = deadlineFromDays(d);
+      // Recurring: auto-calculate first deadline based on interval
+      const interval =
+        recurringType === 'daily'   ? 1  :
+        recurringType === 'weekly'  ? 7  :
+        recurringType === 'monthly' ? 30 :
+        (Number(recurringInterval) || 7);
+      deadline = deadlineFromDays(interval);
+      recurring = { type: recurringType, interval };
     }
-    const recurring = recurringEnabled
-      ? { type: recurringType, interval: Number(recurringInterval) || 7 }
-      : null;
     const startDateStr = startDate
       ? [startDate.getFullYear(), String(startDate.getMonth() + 1).padStart(2, '0'), String(startDate.getDate()).padStart(2, '0')].join('-')
       : null;
@@ -209,68 +219,93 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
               </ScrollView>
             </View>
 
-            {/* Bitiş Tarihi */}
+            {/* Hedef Türü: Tek Seferlik / Tekrarlı */}
             <View style={styles.formGroup}>
-              <Text style={[styles.label, { color: colors.textMuted }]}>{t('addModal.deadline')}</Text>
+              <Text style={[styles.label, { color: colors.textMuted }]}>{t('addModal.goalType')}</Text>
               <View style={[styles.toggle, { backgroundColor: colors.bg, borderColor: colors.border }]}>
-                {['date', 'days'].map(mode => (
+                {['once', 'recurring'].map(type => (
                   <TouchableOpacity
-                    key={mode}
-                    style={[styles.toggleBtn, deadlineMode === mode && [styles.toggleBtnActive, { backgroundColor: colors.surface }]]}
-                    onPress={() => { setDeadlineMode(mode); setShowDatePicker(false); }}
+                    key={type}
+                    style={[styles.toggleBtn, goalType === type && [styles.toggleBtnActive, { backgroundColor: colors.surface }]]}
+                    onPress={() => { setGoalType(type); setShowDatePicker(false); }}
                     activeOpacity={0.8}
                   >
                     <Text style={[styles.toggleBtnText, { color: colors.textMuted },
-                      deadlineMode === mode && { fontWeight: '700', color: colors.text }
+                      goalType === type && { fontWeight: '700', color: colors.text }
                     ]}>
-                      {mode === 'date' ? t('addModal.pickDate') : t('addModal.countDays')}
+                      {type === 'once' ? t('addModal.oneTime') : t('addModal.recurringType')}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
 
-            {deadlineMode === 'date' && (
-              <View style={styles.formGroup}>
-                <TouchableOpacity
-                  style={[styles.dateTrigger, { borderColor: colors.border, backgroundColor: colors.surface }]}
-                  onPress={() => setShowDatePicker(v => !v)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.dateTriggerText, { color: colors.text }]}>📅 {formattedDate}</Text>
-                  <Text style={[styles.dateTriggerArrow, { color: colors.textMuted }]}>{showDatePicker ? '▴' : '▾'}</Text>
-                </TouchableOpacity>
-                {showDatePicker && (
-                  <DateTimePicker
-                    value={selectedDate}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'inline' : 'default'}
-                    minimumDate={new Date()}
-                    onChange={(_, date) => {
-                      if (Platform.OS === 'android') setShowDatePicker(false);
-                      if (date) setSelectedDate(date);
-                    }}
-                    style={styles.datePicker}
-                  />
-                )}
-              </View>
-            )}
-
-            {deadlineMode === 'days' && (
-              <View style={styles.formGroup}>
-                <View style={styles.daysRow}>
-                  <TextInput
-                    style={[styles.input, styles.daysInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
-                    placeholder={t('addModal.placeholder.days')}
-                    placeholderTextColor={colors.textLight}
-                    value={daysInput}
-                    onChangeText={setDaysInput}
-                    keyboardType="numeric"
-                    maxLength={4}
-                  />
-                  <Text style={[styles.daysUnit, { color: colors.textMuted }]}>{t('addModal.days')}</Text>
+            {/* Tek Seferlik: Bitiş Tarihi */}
+            {goalType === 'once' && (
+              <>
+                <View style={styles.formGroup}>
+                  <Text style={[styles.label, { color: colors.textMuted }]}>{t('addModal.deadline')}</Text>
+                  <View style={[styles.toggle, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+                    {['date', 'days'].map(mode => (
+                      <TouchableOpacity
+                        key={mode}
+                        style={[styles.toggleBtn, deadlineMode === mode && [styles.toggleBtnActive, { backgroundColor: colors.surface }]]}
+                        onPress={() => { setDeadlineMode(mode); setShowDatePicker(false); }}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[styles.toggleBtnText, { color: colors.textMuted },
+                          deadlineMode === mode && { fontWeight: '700', color: colors.text }
+                        ]}>
+                          {mode === 'date' ? t('addModal.pickDate') : t('addModal.countDays')}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
-              </View>
+
+                {deadlineMode === 'date' && (
+                  <View style={styles.formGroup}>
+                    <TouchableOpacity
+                      style={[styles.dateTrigger, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                      onPress={() => setShowDatePicker(v => !v)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.dateTriggerText, { color: colors.text }]}>📅 {formattedDate}</Text>
+                      <Text style={[styles.dateTriggerArrow, { color: colors.textMuted }]}>{showDatePicker ? '▴' : '▾'}</Text>
+                    </TouchableOpacity>
+                    {showDatePicker && (
+                      <DateTimePicker
+                        value={selectedDate}
+                        mode="date"
+                        display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                        minimumDate={new Date()}
+                        onChange={(_, date) => {
+                          if (Platform.OS === 'android') setShowDatePicker(false);
+                          if (date) setSelectedDate(date);
+                        }}
+                        style={styles.datePicker}
+                      />
+                    )}
+                  </View>
+                )}
+
+                {deadlineMode === 'days' && (
+                  <View style={styles.formGroup}>
+                    <View style={styles.daysRow}>
+                      <TextInput
+                        style={[styles.input, styles.daysInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+                        placeholder={t('addModal.placeholder.days')}
+                        placeholderTextColor={colors.textLight}
+                        value={daysInput}
+                        onChangeText={setDaysInput}
+                        keyboardType="numeric"
+                        maxLength={4}
+                      />
+                      <Text style={[styles.daysUnit, { color: colors.textMuted }]}>{t('addModal.days')}</Text>
+                    </View>
+                  </View>
+                )}
+              </>
             )}
 
             {/* Başlangıç Tarihi */}
@@ -324,68 +359,53 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
               </View>
             </View>
 
-            {/* Tekrar */}
-            <View style={styles.formGroup}>
-              <View style={styles.rowBetween}>
+            {/* Tekrarlı: Tekrar tipi seçimi */}
+            {goalType === 'recurring' && (
+              <View style={styles.formGroup}>
                 <Text style={[styles.label, { color: colors.textMuted }]}>{t('addModal.recurring')}</Text>
-                <TouchableOpacity
-                  style={[styles.toggleSmall,
-                    { backgroundColor: recurringEnabled ? colors.accentBg : colors.surface2, borderColor: recurringEnabled ? colors.accentDark : colors.border }
-                  ]}
-                  onPress={() => setRecurringEnabled(v => !v)}
-                  activeOpacity={0.75}
-                >
-                  <Text style={[styles.toggleSmallText, { color: recurringEnabled ? (isDark ? colors.accent : '#5A4800') : colors.textMuted }]}>
-                    {recurringEnabled ? '🔁 ' + t('addModal.' + recurringType) : t('addModal.recurringOff')}
-                  </Text>
-                </TouchableOpacity>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesRow}>
+                  {RECURRING_TYPES.map(type => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[styles.categoryChip,
+                        { backgroundColor: colors.surface2, borderColor: colors.border },
+                        recurringType === type && { backgroundColor: colors.accentBg, borderColor: colors.accentDark }
+                      ]}
+                      onPress={() => setRecurringType(type)}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={[styles.categoryChipText, { color: colors.textMuted },
+                        recurringType === type && { fontWeight: '700', color: isDark ? colors.accent : '#5A4800' }
+                      ]}>
+                        {t('addModal.' + type)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                {recurringType === 'custom' && (
+                  <View style={[styles.daysRow, { marginTop: Spacing.sm }]}>
+                    <TextInput
+                      style={[styles.input, styles.daysInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
+                      placeholder="7"
+                      placeholderTextColor={colors.textLight}
+                      value={recurringInterval}
+                      onChangeText={setRecurringInterval}
+                      keyboardType="numeric"
+                      maxLength={3}
+                    />
+                    <Text style={[styles.daysUnit, { color: colors.textMuted }]}>{t('addModal.days')}</Text>
+                  </View>
+                )}
               </View>
-              {recurringEnabled && (
-                <>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesRow}>
-                    {RECURRING_TYPES.map(type => (
-                      <TouchableOpacity
-                        key={type}
-                        style={[styles.categoryChip,
-                          { backgroundColor: colors.surface2, borderColor: colors.border },
-                          recurringType === type && { backgroundColor: colors.accentBg, borderColor: colors.accentDark }
-                        ]}
-                        onPress={() => setRecurringType(type)}
-                        activeOpacity={0.75}
-                      >
-                        <Text style={[styles.categoryChipText, { color: colors.textMuted },
-                          recurringType === type && { fontWeight: '700', color: isDark ? colors.accent : '#5A4800' }
-                        ]}>
-                          {t('addModal.' + type)}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                  {recurringType === 'custom' && (
-                    <View style={[styles.daysRow, { marginTop: Spacing.sm }]}>
-                      <TextInput
-                        style={[styles.input, styles.daysInput, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
-                        placeholder="7"
-                        placeholderTextColor={colors.textLight}
-                        value={recurringInterval}
-                        onChangeText={setRecurringInterval}
-                        keyboardType="numeric"
-                        maxLength={3}
-                      />
-                      <Text style={[styles.daysUnit, { color: colors.textMuted }]}>{t('addModal.days')}</Text>
-                    </View>
-                  )}
-                </>
-              )}
-            </View>
+            )}
 
             {/* Alt Görevler */}
             <View style={styles.formGroup}>
               <Text style={[styles.label, { color: colors.textMuted }]}>{t('addModal.subtasks')}</Text>
-              {subtasks.map((s, i) => (
+              {subtasks.map((s) => (
                 <View key={s.id} style={[styles.subtaskRow, { borderColor: colors.border }]}>
                   <Text style={[styles.subtaskText, { color: colors.text }]}>• {s.text}</Text>
-                  <TouchableOpacity onPress={() => setSubtasks(prev => prev.filter((_, idx) => idx !== i))} activeOpacity={0.7}>
+                  <TouchableOpacity onPress={() => setSubtasks(prev => prev.filter(item => item.id !== s.id))} activeOpacity={0.7}>
                     <Text style={{ color: colors.danger, fontSize: 14, paddingHorizontal: 4 }}>✕</Text>
                   </TouchableOpacity>
                 </View>

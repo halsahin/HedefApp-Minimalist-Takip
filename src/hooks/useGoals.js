@@ -20,6 +20,7 @@ function normaliseGoal(g) {
         recurring: null,
         startDate: null,
         reminderDays: [3, 1],
+        folderId: 'default',
         ...g,
         category: migratedCategory,
     };
@@ -49,7 +50,7 @@ function createNextInstance(goal) {
     };
 }
 
-export function useGoals() {
+export function useGoals(activeFolderId = null) {
     const [goals, setGoals] = useState([]);
     const [sortBy, setSortBy] = useState('days');
     const [filterBy, setFilterBy] = useState('active');
@@ -105,6 +106,7 @@ export function useGoals() {
             recurring: data.recurring || null,
             subtasks: data.subtasks || [],
             reminderDays: data.reminderDays ?? [3, 1],
+            folderId: data.folderId ?? 'default',
             updates: [],
         });
         setGoals(prev => [goal, ...prev]);
@@ -138,6 +140,13 @@ export function useGoals() {
 
     const deleteGoal = useCallback((id) => {
         setGoals(prev => prev.filter(g => g.id !== id));
+    }, []);
+
+    // BUG-14: Move all goals in a folder to 'default' (called before folder deletion)
+    const moveGoalsToDefaultFolder = useCallback((folderId) => {
+        setGoals(prev => prev.map(g =>
+            (g.folderId ?? 'default') === folderId ? { ...g, folderId: 'default' } : g
+        ));
     }, []);
 
     const updateGoal = useCallback((id, data) => {
@@ -235,6 +244,11 @@ export function useGoals() {
     const sortedFiltered = (() => {
         let list = [...goals];
 
+        // Klasör filtresi
+        if (activeFolderId !== null) {
+            list = list.filter(g => (g.folderId ?? 'default') === activeFolderId);
+        }
+
         if (filterBy === 'active')    list = list.filter(g => !g.completed);
         if (filterBy === 'completed') list = list.filter(g => g.completed);
         if (filterBy === 'pinned')    list = list.filter(g => g.pinned);
@@ -281,6 +295,7 @@ export function useGoals() {
         toggleComplete,
         togglePin,
         deleteGoal,
+        moveGoalsToDefaultFolder,
         addUpdate,
         editUpdate,
         deleteUpdate,
