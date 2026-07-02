@@ -13,7 +13,7 @@ const FILTER_KEYS = [
 
 export default function FilterTabs({ filterBy, onFilterChange }) {
     const { t } = useLanguage();
-    const { colors } = useTheme();
+    const { colors, isDark } = useTheme();
 
     return (
         <ScrollView
@@ -27,12 +27,16 @@ export default function FilterTabs({ filterBy, onFilterChange }) {
                     return (
                         <TouchableOpacity
                             key={f.key}
-                            style={[styles.tab, active && styles.tabActive]}
+                            style={[styles.tab, active && { backgroundColor: colors.accent }]}
                             onPress={() => onFilterChange(f.key)}
                             activeOpacity={0.75}
                         >
-                            <Text style={[styles.tabText, { color: colors.textMuted },
-                                active && { fontWeight: '700', color: '#5A4800' }
+                            <Text style={[
+                                styles.tabText, 
+                                { 
+                                    color: active ? colors.bg : colors.textMuted,
+                                    fontWeight: active ? '700' : '500'
+                                }
                             ]}>
                                 {t(f.tKey)}
                             </Text>
@@ -64,6 +68,5 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
         borderRadius: Radii.sm,
     },
-    tabActive: { backgroundColor: '#F9E55A' },
     tabText: { fontSize: Typography.sm, fontWeight: '500', lineHeight: 18 },
 });

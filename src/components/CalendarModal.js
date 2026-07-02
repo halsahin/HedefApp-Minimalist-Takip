@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
     Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform, StatusBar,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { Spacing, Radii, Typography } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -19,8 +20,6 @@ export default function CalendarModal({ visible, onClose, goals }) {
     const { colors, isDark } = useTheme();
     const { t, locale } = useLanguage();
     const [selectedDate, setSelectedDate] = useState(null);
-
-    const today = new Date().toISOString().slice(0, 10);
 
     const markedDates = useMemo(() => {
         const marks = {};
@@ -126,9 +125,9 @@ export default function CalendarModal({ visible, onClose, goals }) {
                                         backgroundColor: colors.surface,
                                         borderColor: colors.border,
                                     }]}>
-                                        <Text style={styles.goalIcon}>
-                                            {CATEGORY_ICON_MAP[goal.category] || '📌'}
-                                        </Text>
+                                        <View style={{ marginRight: Spacing.sm, width: 24, alignItems: 'center' }}>
+                                            <Feather name={CATEGORY_ICON_MAP[goal.category] || 'map-pin'} size={18} color={colors.textMuted} />
+                                        </View>
                                         <View style={{ flex: 1 }}>
                                             <Text style={[styles.goalName, { color: colors.text },
                                                 goal.completed && { textDecorationLine: 'line-through', color: colors.textMuted }
@@ -140,13 +139,13 @@ export default function CalendarModal({ visible, onClose, goals }) {
                                             </Text>
                                         </View>
                                         {goal.completed && (
-                                            <Text style={[styles.goalBadge, { color: colors.success }]}>✓</Text>
+                                            <Feather name="check" size={14} color={colors.success} style={styles.goalBadge} />
                                         )}
                                         {!goal.completed && days < 0 && (
-                                            <Text style={[styles.goalBadge, { color: colors.danger }]}>⚡</Text>
+                                            <Feather name="zap" size={14} color={colors.danger} style={styles.goalBadge} />
                                         )}
                                         {goal.recurring && (
-                                            <Text style={styles.goalBadge}>🔁</Text>
+                                            <Feather name="repeat" size={14} color={colors.textMuted} style={styles.goalBadge} />
                                         )}
                                     </View>
                                 );

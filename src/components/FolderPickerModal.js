@@ -4,6 +4,7 @@ import {
     ScrollView, StyleSheet, Keyboard, Animated,
     Dimensions, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { Typography, Spacing, Radii, Shadows } from '../constants/theme';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -108,7 +109,7 @@ export default function FolderPickerModal({
 
             <KeyboardAvoidingView
                 style={styles.kavWrapper}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                behavior="padding"
                 keyboardVerticalOffset={0}
             >
                 <Animated.View style={[styles.sheet, { backgroundColor: colors.surface, transform: [{ translateY }] }]}>
@@ -137,7 +138,7 @@ export default function FolderPickerModal({
                                 </Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={close} style={[styles.closeBtn, { backgroundColor: colors.bg }]} activeOpacity={0.7}>
-                                <Text style={[styles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
+                                <Feather name="x" size={24} color={colors.textMuted} />
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -170,7 +171,7 @@ export default function FolderPickerModal({
                                     activeOpacity={editMode || isRenaming ? 1 : 0.75}
                                 >
                                     <Text style={styles.folderIcon}>
-                                        {item.isAll ? '🗂️' : item.id === 'default' ? '📁' : '📂'}
+                                        <Feather name={item.isAll ? 'layers' : 'folder'} size={16} color={item.id === 'default' || item.isAll ? colors.textMuted : colors.accent} style={styles.folderItemIcon} />
                                     </Text>
 
                                     {isRenaming ? (
@@ -187,7 +188,7 @@ export default function FolderPickerModal({
                                         <Text style={[
                                             styles.folderName,
                                             { color: item.isAll ? colors.textMuted : colors.text },
-                                            isActive && !editMode && { fontWeight: '700', color: isDark ? colors.accent : '#5A4800' },
+                                            isActive && !editMode && { fontWeight: '700', color: isDark ? colors.accent : colors.accentDark },
                                         ]}>
                                             {item.name}
                                         </Text>
@@ -199,7 +200,7 @@ export default function FolderPickerModal({
                                                 onPress={handleRenameSubmit}
                                                 style={[styles.actionChip, { backgroundColor: colors.accentBg, borderColor: colors.accentDark }]}
                                             >
-                                                <Text style={[styles.actionChipText, { color: isDark ? colors.accent : '#5A4800' }]}>
+                                                <Text style={[styles.actionChipText, { color: isDark ? colors.accent : colors.accentDark }]}>
                                                     {t('folder.save')}
                                                 </Text>
                                             </TouchableOpacity>
@@ -210,18 +211,18 @@ export default function FolderPickerModal({
                                                     style={[styles.editIconBtn, { backgroundColor: colors.bg, borderColor: colors.border }]}
                                                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                                                 >
-                                                    <Text style={styles.editIconBtnText}>✏️</Text>
+                                                    <Feather name="edit-2" size={16} color={colors.textMuted} />
                                                 </TouchableOpacity>
                                                 <TouchableOpacity
                                                     onPress={() => handleDeletePress(item)}
                                                     style={[styles.editIconBtn, { backgroundColor: colors.bg, borderColor: colors.border }]}
                                                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                                                 >
-                                                    <Text style={styles.editIconBtnText}>🗑️</Text>
+                                                    <Feather name="trash-2" size={16} color={colors.danger} />
                                                 </TouchableOpacity>
                                             </View>
                                         ) : !editMode && isActive ? (
-                                            <Text style={[styles.checkmark, { color: colors.accentDark }]}>✓</Text>
+                                            <Feather name="check" size={16} color={colors.accentDark} />
                                         ) : null}
                                     </View>
                                 </TouchableOpacity>
@@ -252,14 +253,14 @@ export default function FolderPickerModal({
                                         onPress={handleAddSubmit}
                                         activeOpacity={0.75}
                                     >
-                                        <Text style={[styles.iconBtnText, { color: isDark ? colors.accent : '#5A4800' }]}>✓</Text>
+                                        <Feather name="check" size={20} color={isDark ? colors.accent : colors.accentDark} />
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={[styles.iconBtn, { borderColor: colors.border }]}
                                         onPress={() => { setShowNewInput(false); setNewFolderInput(''); Keyboard.dismiss(); }}
                                         activeOpacity={0.75}
                                     >
-                                        <Text style={[styles.iconBtnText, { color: colors.textMuted }]}>✕</Text>
+                                        <Feather name="x" size={20} color={colors.textMuted} />
                                     </TouchableOpacity>
                                 </View>
                             ) : (
@@ -271,7 +272,7 @@ export default function FolderPickerModal({
                                     }}
                                     activeOpacity={0.75}
                                 >
-                                    <Text style={[styles.addBtnText, { color: isDark ? colors.accent : '#5A4800' }]}>
+                                    <Text style={[styles.addBtnText, { color: isDark ? colors.accent : colors.accentDark }]}>
                                         {t('folder.new')}
                                     </Text>
                                 </TouchableOpacity>

@@ -30,6 +30,14 @@ import {
   scheduleGoalNotifications,
   cancelGoalNotifications,
 } from './src/utils/notifications';
+import { configureGoogleSignIn } from './src/utils/googleDrive';
+
+let mobileAds = null;
+try {
+  mobileAds = require('react-native-google-mobile-ads').default;
+} catch {
+  // Ignore in environments where it's missing (e.g. web or Expo Go)
+}
 
 function AppContent({ onRestore }) {
   const { t } = useLanguage();
@@ -96,7 +104,13 @@ function AppContent({ onRestore }) {
   useEffect(() => { rawGoalsRef.current = rawGoals; }, [rawGoals]);
 
   // Request notification permissions once on mount
-  useEffect(() => { setupNotifications(); }, []);
+  useEffect(() => { 
+    setupNotifications(); 
+    configureGoogleSignIn();
+    if (mobileAds) {
+      mobileAds().initialize().catch(() => {});
+    }
+  }, []);
 
   const detailGoal = detailGoalId
     ? rawGoals.find(g => g.id === detailGoalId) ?? null

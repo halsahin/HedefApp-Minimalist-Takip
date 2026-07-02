@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Modal, View, Text, TextInput, TouchableOpacity,
   ScrollView, StyleSheet, Keyboard, Platform,
-  KeyboardAvoidingView, Animated, PanResponder, useWindowDimensions, Alert,
+  KeyboardAvoidingView, Animated, PanResponder, useWindowDimensions, Alert, Dimensions,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Typography, Spacing, Radii, Shadows } from '../constants/theme';
+import { Feather } from '@expo/vector-icons';
 import { CATEGORIES } from '../constants/categories';
 import { defaultDeadline, deadlineFromDays, generateId } from '../utils/dateUtils';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -13,6 +14,7 @@ import { useTheme } from '../contexts/ThemeContext';
 
 const SWIPE_CLOSE_THRESHOLD = 80;
 const SWIPE_VELOCITY_THRESHOLD = 0.5;
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 const PROGRESS_OPTIONS = [0, 25, 50, 75, 100];
 const RECURRING_TYPES = ['daily', 'weekly', 'monthly', 'custom'];
@@ -158,7 +160,7 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
   return (
     <Modal visible={visible} animationType="none" transparent statusBarTranslucent onRequestClose={animatedClose}>
       <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={animatedClose} />
-      <KeyboardAvoidingView style={styles.kavWrapper} behavior="padding" keyboardVerticalOffset={0}>
+      <KeyboardAvoidingView style={styles.kavWrapper} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={0}>
         <Animated.View style={[styles.sheet, { backgroundColor: colors.surface, transform: [{ translateY }] }]}>
           <View style={styles.handleArea} {...panResponder.panHandlers} hitSlop={{ top: 10, bottom: 10, left: 40, right: 40 }}>
             <View style={[styles.handle, { backgroundColor: colors.border }]} />
@@ -167,7 +169,7 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
           <View style={styles.modalHeader}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>{t('addModal.title')}</Text>
             <TouchableOpacity onPress={animatedClose} style={[styles.closeBtn, { backgroundColor: colors.bg }]} activeOpacity={0.7}>
-              <Text style={[styles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
+              <Feather name="x" size={24} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
@@ -208,11 +210,14 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
                       onPress={() => setCategory(cat.key)}
                       activeOpacity={0.75}
                     >
-                      <Text style={[styles.categoryChipText, { color: colors.textMuted },
-                        active && { fontWeight: '700', color: isDark ? colors.accent : '#5A4800' }
-                      ]}>
-                        {cat.icon} {t(`cat.${cat.key}`)}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Feather name={cat.icon} size={14} color={active ? colors.accentDark : colors.textMuted} />
+                        <Text style={[styles.categoryChipText, { color: colors.textMuted, marginLeft: 6 },
+                          active && { fontWeight: '700', color: isDark ? colors.accent : colors.accentDark }
+                        ]}>
+                          {t(`cat.${cat.key}`)}
+                        </Text>
+                      </View>
                     </TouchableOpacity>
                   );
                 })}
@@ -270,7 +275,10 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
                       onPress={() => setShowDatePicker(v => !v)}
                       activeOpacity={0.8}
                     >
-                      <Text style={[styles.dateTriggerText, { color: colors.text }]}>📅 {formattedDate}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Feather name="calendar" size={16} color={colors.text} />
+                        <Text style={[styles.dateTriggerText, { color: colors.text, marginLeft: 6 }]}>{formattedDate}</Text>
+                      </View>
                       <Text style={[styles.dateTriggerArrow, { color: colors.textMuted }]}>{showDatePicker ? '▴' : '▾'}</Text>
                     </TouchableOpacity>
                     {showDatePicker && (
@@ -318,9 +326,12 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
                 onPress={() => setShowStartDatePicker(v => !v)}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.dateTriggerText, { color: formattedStartDate ? colors.text : colors.textLight }]}>
-                  🚀 {formattedStartDate || t('addModal.pickDate')}
-                </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Feather name="calendar" size={16} color={formattedStartDate ? colors.text : colors.textLight} />
+                    <Text style={[styles.dateTriggerText, { color: formattedStartDate ? colors.text : colors.textLight, marginLeft: 6 }]}>
+                      {formattedStartDate || t('addModal.pickDate')}
+                    </Text>
+                  </View>
                 <Text style={[styles.dateTriggerArrow, { color: colors.textMuted }]}>{showStartDatePicker ? '▴' : '▾'}</Text>
               </TouchableOpacity>
               {showStartDatePicker && (
@@ -352,7 +363,7 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
                     activeOpacity={0.75}
                   >
                     <Text style={[styles.progressBtnText, { color: colors.textMuted },
-                      progress === p && { fontWeight: '700', color: isDark ? colors.accent : '#5A4800' }
+                      progress === p && { fontWeight: '700', color: isDark ? colors.accent : colors.accentDark }
                     ]}>{p}%</Text>
                   </TouchableOpacity>
                 ))}
@@ -375,7 +386,7 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
                       activeOpacity={0.75}
                     >
                       <Text style={[styles.categoryChipText, { color: colors.textMuted },
-                        recurringType === type && { fontWeight: '700', color: isDark ? colors.accent : '#5A4800' }
+                        recurringType === type && { fontWeight: '700', color: isDark ? colors.accent : colors.accentDark }
                       ]}>
                         {t('addModal.' + type)}
                       </Text>
@@ -406,7 +417,7 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
                 <View key={s.id} style={[styles.subtaskRow, { borderColor: colors.border }]}>
                   <Text style={[styles.subtaskText, { color: colors.text }]}>• {s.text}</Text>
                   <TouchableOpacity onPress={() => setSubtasks(prev => prev.filter(item => item.id !== s.id))} activeOpacity={0.7}>
-                    <Text style={{ color: colors.danger, fontSize: 14, paddingHorizontal: 4 }}>✕</Text>
+                    <Feather name="x" size={14} color={colors.danger} style={{ paddingHorizontal: 4 }} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -425,7 +436,7 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
                   onPress={addSubtask}
                   activeOpacity={0.75}
                 >
-                  <Text style={{ color: isDark ? colors.accent : '#5A4800', fontWeight: '700' }}>+</Text>
+                  <Text style={{ color: isDark ? colors.accent : colors.accentDark, fontWeight: '700' }}>+</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -447,7 +458,7 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
                       )}
                       activeOpacity={0.75}
                     >
-                      <Text style={[styles.reminderChipText, { color: active ? (isDark ? colors.accent : '#5A4800') : colors.textMuted },
+                      <Text style={[styles.reminderChipText, { color: active ? (isDark ? colors.accent : colors.accentDark) : colors.textMuted },
                         active && { fontWeight: '700' }
                       ]}>
                         {t(`reminder.${days}`)}
@@ -462,8 +473,8 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
                     onPress={() => setReminderDays(prev => prev.filter(d => d !== days))}
                     activeOpacity={0.75}
                   >
-                    <Text style={[styles.reminderChipText, { color: isDark ? colors.accent : '#5A4800', fontWeight: '700' }]}>
-                      {t('reminder.custom', { n: days })} ✕
+                    <Text style={[styles.reminderChipText, { color: isDark ? colors.accent : colors.accentDark, fontWeight: '700' }]}>
+                      {t('reminder.custom', { n: days })} <Feather name="x" size={12} color={active ? colors.accentDark : colors.textMuted} />
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -497,7 +508,7 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
                   }}
                   activeOpacity={0.75}
                 >
-                  <Text style={{ color: isDark ? colors.accent : '#5A4800', fontWeight: '700', fontSize: Typography.base }}>+</Text>
+                  <Text style={{ color: isDark ? colors.accent : colors.accentDark, fontWeight: '700', fontSize: Typography.base }}>+</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -529,8 +540,12 @@ export default function AddGoalModal({ visible, onClose, onSubmit }) {
               >
                 <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>{t('addModal.cancel')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} activeOpacity={0.8}>
-                <Text style={styles.submitBtnText}>{t('addModal.submit')}</Text>
+              <TouchableOpacity 
+                  style={[styles.submitBtn, { backgroundColor: colors.accent, shadowColor: colors.accent }]} 
+                  onPress={handleSubmit} 
+                  activeOpacity={0.8}
+              >
+                <Text style={[styles.submitBtnText, { color: colors.bg }]}>{t('addModal.submit')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -605,11 +620,10 @@ const styles = StyleSheet.create({
   cancelBtn: { flex: 1, paddingVertical: Spacing.md - 2, borderRadius: Radii.md, borderWidth: 1, alignItems: 'center' },
   cancelBtnText: { fontSize: Typography.base - 1, fontWeight: '500' },
   submitBtn: {
-    flex: 2, paddingVertical: Spacing.md - 2, borderRadius: Radii.md,
-    backgroundColor: '#F9E55A', alignItems: 'center',
-    shadowColor: '#F9E55A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 3,
+    flex: 2, paddingVertical: Spacing.md - 2, borderRadius: Radii.md, alignItems: 'center',
+    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 3,
   },
-  submitBtnText: { fontSize: Typography.base - 1, fontWeight: '700', color: '#5A4800' },
+  submitBtnText: { fontSize: Typography.base - 1, fontWeight: '700' },
   progressBtns: { flexDirection: 'row', gap: Spacing.xs, flexWrap: 'wrap' },
   progressBtn: { paddingHorizontal: Spacing.md, paddingVertical: 6, borderRadius: Radii.full, borderWidth: 1 },
   progressBtnText: { fontSize: Typography.sm, fontWeight: '500' },

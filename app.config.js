@@ -4,13 +4,13 @@
  * AdMob App ID'leri src/config/ads.js'ten okunur (.gitignore'da, GitHub'a gitmez).
  * ads.js yoksa (CI/CD ortamı) test ID'leriyle devam eder.
  */
-let ADMOB_ANDROID_APP_ID = 'ca-app-pub-3940256099942544~3347511713'; // fallback: test ID
-let ADMOB_IOS_APP_ID = 'ca-app-pub-3940256099942544~1458002511'; // fallback: test ID
+let ADMOB_ANDROID_APP_ID = process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID || 'ca-app-pub-3940256099942544~3347511713'; // fallback: test ID
+let ADMOB_IOS_APP_ID = process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID || 'ca-app-pub-3940256099942544~1458002511'; // fallback: test ID
 
 try {
     const adsConfig = require('./src/config/ads');
-    if (adsConfig.ADMOB_ANDROID_APP_ID) ADMOB_ANDROID_APP_ID = adsConfig.ADMOB_ANDROID_APP_ID;
-    if (adsConfig.ADMOB_IOS_APP_ID) ADMOB_IOS_APP_ID = adsConfig.ADMOB_IOS_APP_ID;
+    if (adsConfig.ADMOB_ANDROID_APP_ID && !process.env.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID) ADMOB_ANDROID_APP_ID = adsConfig.ADMOB_ANDROID_APP_ID;
+    if (adsConfig.ADMOB_IOS_APP_ID && !process.env.EXPO_PUBLIC_ADMOB_IOS_APP_ID) ADMOB_IOS_APP_ID = adsConfig.ADMOB_IOS_APP_ID;
 } catch {
     // ads.js yoksa (örn. CI/CD) test ID'leriyle devam et
 }
@@ -19,7 +19,7 @@ module.exports = {
     expo: {
         name: "HedefApp",
         slug: "hedefapp",
-        version: "1.2.1",
+        version: "1.3.3",
         orientation: "portrait",
         icon: "./assets/icon.png",
         userInterfaceStyle: "automatic",
@@ -40,13 +40,15 @@ module.exports = {
             },
             edgeToEdgeEnabled: true,
             package: "com.r1cha.hedefApp",
-            versionCode: 4,
+            versionCode: 8,
             allowBackup: true
         },
         web: {
             favicon: "./assets/favicon.png"
         },
         plugins: [
+            "expo-font",
+            "@react-native-community/datetimepicker",
             [
                 "expo-notifications",
                 {
@@ -66,6 +68,15 @@ module.exports = {
                 {
                     androidAppId: ADMOB_ANDROID_APP_ID,
                     iosAppId: ADMOB_IOS_APP_ID
+                }
+            ],
+            "@react-native-google-signin/google-signin",
+            [
+                "expo-build-properties",
+                {
+                    "android": {
+                        "extraProguardRules": "-keep class expo.modules.** { *; }\n-keep class kotlin.Metadata { *; }\n-keep class kotlin.reflect.** { *; }\n-keep class com.google.android.gms.internal.consent_sdk.** { *; }\n-keep class com.google.android.gms.ads.** { *; }\n-keep interface com.google.android.gms.ads.** { *; }\n-keep class com.google.ads.mediation.** { *; }"
+                    }
                 }
             ]
         ],

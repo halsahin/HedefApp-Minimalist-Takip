@@ -3,6 +3,7 @@ import {
     View, Text, StyleSheet, Alert, Animated, PanResponder, TouchableOpacity,
 } from 'react-native';
 import { Typography, Spacing, Radii, Shadows } from '../constants/theme';
+import { Feather } from '@expo/vector-icons';
 import { CATEGORY_ICON_MAP, getCategoryLabel } from '../constants/categories';
 import { calcRemainingDays, formatDate, getDayChipInfo } from '../utils/dateUtils';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -16,10 +17,10 @@ export default function GoalCard({ goal, onToggleComplete, onTogglePin, onDelete
 
     const days = calcRemainingDays(goal.deadline);
     const overdue = !goal.completed && days < 0;
-    const icon = CATEGORY_ICON_MAP[goal.category] || '📌';
+    const icon = CATEGORY_ICON_MAP[goal.category] || 'bookmark';
     const chipInfo = getDayChipInfo(days, goal.completed);
 
-    const dayDisplay = goal.completed ? '✓' : `${Math.abs(days)}`;
+    const dayDisplay = goal.completed ? 'completed' : `${Math.abs(days)}`;
     const dayTextLabel = goal.completed
         ? t('goalCard.done')
         : (days < 0 ? t('goalCard.daysAgo') : t('goalCard.daysLeft'));
@@ -105,10 +106,10 @@ export default function GoalCard({ goal, onToggleComplete, onTogglePin, onDelete
     return (
         <View style={styles.swipeWrapper}>
             <View style={[styles.revealLeft, { backgroundColor: colors.successSoft }]}>
-                <Text style={[styles.revealIcon, { color: colors.success }]}>✓</Text>
+                <Feather name="check" size={24} color={colors.success} style={styles.revealIcon} />
             </View>
             <View style={[styles.revealRight, { backgroundColor: colors.dangerSoft }]}>
-                <Text style={[styles.revealIcon, { color: colors.danger }]}>🗑</Text>
+                <Feather name="trash-2" size={24} color={colors.danger} style={styles.revealIcon} />
             </View>
 
             <Animated.View
@@ -133,17 +134,20 @@ export default function GoalCard({ goal, onToggleComplete, onTogglePin, onDelete
                         onPress={() => onToggleComplete(goal.id)}
                         activeOpacity={0.7}
                     >
-                        {goal.completed && <Text style={styles.checkmark}>✓</Text>}
+                        {goal.completed && <Feather name="check-circle" size={24} color={colors.success} style={styles.checkmark} />}
                     </TouchableOpacity>
 
                     <View style={styles.body}>
                         <View style={styles.meta}>
                             <View style={[styles.categoryBadge, { backgroundColor: colors.bg, borderColor: colors.border }]}>
-                                <Text style={[styles.categoryBadgeText, { color: colors.textMuted }]}>
-                                    {icon} {getCategoryLabel(goal.category, t)}
-                                </Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <Feather name={icon} size={12} color={colors.textMuted} />
+                                    <Text style={[styles.categoryBadgeText, { color: colors.textMuted, marginLeft: 4 }]}>
+                                        {getCategoryLabel(goal.category, t)}
+                                    </Text>
+                                </View>
                             </View>
-                            {goal.recurring && <Text style={styles.recurringBadge}>🔁</Text>}
+                            {goal.recurring && <Feather name="repeat" size={14} color={colors.textMuted} style={styles.recurringBadge} />}
                         </View>
 
                         <Text style={[styles.name, { color: colors.text },
@@ -158,9 +162,12 @@ export default function GoalCard({ goal, onToggleComplete, onTogglePin, onDelete
                             </Text>
                         )}
 
-                        <Text style={[styles.dateInfo, { color: colors.textLight }]}>
-                            📅 {formatDate(goal.deadline, locale)}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: Spacing.xs }}>
+                            <Feather name="calendar" size={12} color={colors.textLight} />
+                            <Text style={[styles.dateInfo, { color: colors.textLight, marginTop: 0, marginLeft: 4 }]}>
+                                {formatDate(goal.deadline, locale)}
+                            </Text>
+                        </View>
 
                         {showProgress && (
                             <View style={styles.progressRow}>
@@ -177,27 +184,32 @@ export default function GoalCard({ goal, onToggleComplete, onTogglePin, onDelete
                         )}
 
                         {goal.subtasks && goal.subtasks.length > 0 && (
-                            <Text style={[styles.subtaskHint, { color: colors.textLight }]}>
-                                ✅ {goal.subtasks.filter(s => s.completed).length}/{goal.subtasks.length}
-                            </Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: Spacing.xs }}>
+                                <Feather name="check-square" size={12} color={colors.textLight} />
+                                <Text style={[styles.subtaskHint, { color: colors.textLight, marginTop: 0, marginLeft: 4 }]}>
+                                    {goal.subtasks.filter(s => s.completed).length}/{goal.subtasks.length}
+                                </Text>
+                            </View>
                         )}
                     </View>
 
                     <View style={styles.right}>
                         <View style={styles.daysBlock}>
-                            <Text style={[styles.daysNumber, { color: daysNumColor }]}>{dayDisplay}</Text>
-                            <Text style={[styles.daysLabel, { color: colors.textMuted }]}>{dayTextLabel}</Text>
+                            {goal.completed ? (
+                                <Feather name="check" size={24} color={colors.success} />
+                            ) : (
+                                <Text style={[styles.daysNumber, { color: daysNumColor }]}>{dayDisplay}</Text>
+                            )}
+                            {!goal.completed && <Text style={[styles.daysLabel, { color: colors.textMuted }]}>{dayTextLabel}</Text>}
                             <ChipView chipInfo={chipInfo} t={t} colors={colors} />
                         </View>
 
                         <View style={styles.actions}>
                             <TouchableOpacity onPress={() => onTogglePin(goal.id)} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
-                                <Text style={[styles.actionIcon, goal.pinned && { color: colors.accentDark }]}>
-                                    {goal.pinned ? '⭐' : '☆'}
-                                </Text>
+                                    <Feather name="star" size={18} color={goal.pinned ? colors.accentDark : colors.textLight} />
                             </TouchableOpacity>
                             <TouchableOpacity onPress={handleDeletePress} hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}>
-                                <Text style={styles.actionIcon}>🗑</Text>
+                                <Feather name="trash-2" size={18} color={colors.danger} />
                             </TouchableOpacity>
                         </View>
                     </View>

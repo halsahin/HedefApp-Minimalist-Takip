@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import {
     Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform, StatusBar,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { Spacing, Radii, Typography } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -46,10 +47,10 @@ export default function StatsModal({ visible, onClose, goals }) {
 
                 <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
                     <View style={[styles.grid, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                        <StatBox label={t('stats.total')} value={stats.total} icon="🎯" colors={colors} />
-                        <StatBox label={t('stats.active')} value={stats.active} icon="⚡" colors={colors} accent />
-                        <StatBox label={t('stats.completed')} value={stats.completed} icon="✅" colors={colors} success />
-                        <StatBox label={t('stats.overdue')} value={stats.overdue} icon="⏰" colors={colors} danger />
+                        <StatBox label={t('stats.total')} value={stats.total} icon={<Feather name="target" size={24} color={colors.text} />} colors={colors} />
+                        <StatBox label={t('stats.active')} value={stats.active} icon={<Feather name="zap" size={24} color={colors.accentDark} />} colors={colors} accent />
+                        <StatBox label={t('stats.completed')} value={stats.completed} icon={<Feather name="check-circle" size={24} color={colors.success} />} colors={colors} success />
+                        <StatBox label={t('stats.overdue')} value={stats.overdue} icon={<Feather name="clock" size={24} color={colors.danger} />} colors={colors} danger />
                     </View>
 
                     <View style={[styles.rateCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -72,9 +73,12 @@ export default function StatsModal({ visible, onClose, goals }) {
                             </Text>
                             {stats.byCategory.map(cat => (
                                 <View key={cat.key} style={styles.catRow}>
-                                    <Text style={[styles.catLabel, { color: colors.text }]}>
-                                        {cat.icon} {cat.label}
-                                    </Text>
+                                    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', paddingRight: 8 }}>
+                                        <Feather name={cat.icon} size={14} color={colors.textMuted} />
+                                        <Text style={[styles.catLabel, { color: colors.text, marginLeft: 6, flex: 0 }]} numberOfLines={1}>
+                                            {cat.label}
+                                        </Text>
+                                    </View>
                                     <View style={styles.catRight}>
                                         <View style={[styles.catBar, { backgroundColor: colors.border }]}>
                                             <View style={[styles.catBarFill, {
@@ -98,7 +102,9 @@ function StatBox({ label, value, icon, colors, accent, success, danger }) {
     const valueColor = accent ? colors.accentDark : success ? colors.success : danger ? colors.danger : colors.text;
     return (
         <View style={[styles.statBox, { borderColor: colors.border }]}>
-            <Text style={styles.statIcon}>{icon}</Text>
+            <View style={styles.statIconWrapper}>
+                {icon}
+            </View>
             <Text style={[styles.statValue, { color: valueColor }]}>{value}</Text>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
         </View>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { Spacing, Radii, Typography } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -10,7 +11,7 @@ export default function SearchBar({ value, onChangeText }) {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.icon, { color: colors.textLight }]}>🔍</Text>
+            <Feather name="search" size={16} color={colors.textLight} style={styles.icon} />
             <TextInput
                 style={[styles.input, { color: colors.text }]}
                 value={value}
@@ -22,7 +23,7 @@ export default function SearchBar({ value, onChangeText }) {
             />
             {value.length > 0 && (
                 <TouchableOpacity onPress={() => onChangeText('')} activeOpacity={0.7}>
-                    <Text style={[styles.clear, { color: colors.textMuted }]}>✕</Text>
+                    <Feather name="x" size={16} color={colors.textMuted} />
                 </TouchableOpacity>
             )}
         </View>

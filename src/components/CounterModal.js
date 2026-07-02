@@ -3,6 +3,7 @@ import {
     Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet,
     TextInput, Alert, Platform, StatusBar, Vibration, KeyboardAvoidingView,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Typography, Spacing, Radii } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
@@ -35,7 +36,7 @@ function fmtClock(iso) {
 
 function nowISO() { return new Date().toISOString(); }
 
-const TYPE_ICON = { pomodoro: '🍅', stopwatch: '⏱️', timer: '⏳' };
+const TYPE_ICON = { pomodoro: 'coffee', stopwatch: 'watch', timer: 'clock' };
 
 export default function CounterModal({
     visible, onClose,
@@ -66,11 +67,13 @@ export default function CounterModal({
     const pomCountRef = useRef(0);
     const pomSecsRef = useRef(POM_WORK);
     const pomStartRef = useRef(null);
+    const pomLastTickRef = useRef(null);
 
     // ── stopwatch ───────────────────────────────────────────────────
     const [swSecs, setSwSecs] = useState(0);
     const [swRunning, setSwRunning] = useState(false);
     const swStartRef = useRef(null);
+    const swLastTickRef = useRef(null);
 
     // ── timer ───────────────────────────────────────────────────────
     const [timerMins, setTimerMins] = useState(10);
@@ -80,6 +83,7 @@ export default function CounterModal({
     const timerStartRef = useRef(null);
     const timerTargetRef = useRef(10 * 60);
     const timerMinsRef = useRef(10);
+    const timerLastTickRef = useRef(null);
 
     // ── notes ───────────────────────────────────────────────────────
     const [noteText, setNoteText] = useState('');
@@ -89,10 +93,7 @@ export default function CounterModal({
     const onAddRecordRef = useRef(onAddRecord);
     useEffect(() => { onAddRecordRef.current = onAddRecord; }, [onAddRecord]);
 
-    // reset on close
-    useEffect(() => {
-        if (!visible) fullReset();
-    }, [visible]);
+    // No automatic reset on close, to allow timers to run in the background
 
     function fullReset() {
         setPomPhase('work'); setPomCount(0); setPomSecs(POM_WORK); setPomRunning(false);
@@ -111,17 +112,31 @@ export default function CounterModal({
 
     // ── pomodoro interval ───────────────────────────────────────────
     useEffect(() => {
-        if (!pomRunning) return;
+        if (!pomRunning) {
+            pomLastTickRef.current = null;
+            return;
+        }
+        pomLastTickRef.current = Date.now();
         const id = setInterval(() => {
-            pomSecsRef.current -= 1;
-            setPomSecs(pomSecsRef.current);
-            if (pomSecsRef.current <= 0) {
-                clearInterval(id);
-                setPomRunning(false);
-                Vibration.vibrate([0, 400, 200, 400]);
-                handlePomPhaseEnd();
+            const now = Date.now();
+            const delta = now - pomLastTickRef.current;
+            if (delta >= 1000) {
+                const secsToSub = Math.floor(delta / 1000);
+                pomLastTickRef.current += secsToSub * 1000;
+                
+                pomSecsRef.current -= secsToSub;
+                if (pomSecsRef.current <= 0) {
+                    pomSecsRef.current = 0;
+                    setPomSecs(0);
+                    clearInterval(id);
+                    setPomRunning(false);
+                    Vibration.vibrate([0, 400, 200, 400]);
+                    handlePomPhaseEnd();
+                } else {
+                    setPomSecs(pomSecsRef.current);
+                }
             }
-        }, 1000);
+        }, 500);
         return () => clearInterval(id);
     }, [pomRunning]);
 
@@ -169,8 +184,20 @@ export default function CounterModal({
 
     // ── stopwatch interval ──────────────────────────────────────────
     useEffect(() => {
-        if (!swRunning) return;
-        const id = setInterval(() => setSwSecs(p => p + 1), 1000);
+        if (!swRunning) {
+            swLastTickRef.current = null;
+            return;
+        }
+        swLastTickRef.current = Date.now();
+        const id = setInterval(() => {
+            const now = Date.now();
+            const delta = now - swLastTickRef.current;
+            if (delta >= 1000) {
+                const secsToAdd = Math.floor(delta / 1000);
+                swLastTickRef.current += secsToAdd * 1000;
+                setSwSecs(p => p + secsToAdd);
+            }
+        }, 500);
         return () => clearInterval(id);
     }, [swRunning]);
 
@@ -192,26 +219,38 @@ export default function CounterModal({
 
     // ── timer interval ──────────────────────────────────────────────
     useEffect(() => {
-        if (!timerRunning) return;
+        if (!timerRunning) {
+            timerLastTickRef.current = null;
+            return;
+        }
+        timerLastTickRef.current = Date.now();
         const id = setInterval(() => {
-            setTimerSecs(prev => {
-                if (prev <= 1) {
-                    clearInterval(id);
-                    setTimerRunning(false);
-                    Vibration.vibrate([0, 400, 200, 400, 200, 400]);
-                    onAddRecordRef.current({
-                        id: Date.now().toString(),
-                        type: 'timer',
-                        label: `${timerMinsRef.current}${t('counter.minShort')} ${t('counter.timerSession')}`,
-                        startTime: timerStartRef.current || nowISO(),
-                        duration: timerTargetRef.current,
-                        notes: [],
-                    });
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
+            const now = Date.now();
+            const delta = now - timerLastTickRef.current;
+            if (delta >= 1000) {
+                const secsToSub = Math.floor(delta / 1000);
+                timerLastTickRef.current += secsToSub * 1000;
+                
+                setTimerSecs(prev => {
+                    const next = prev - secsToSub;
+                    if (next <= 0) {
+                        clearInterval(id);
+                        setTimerRunning(false);
+                        Vibration.vibrate([0, 400, 200, 400, 200, 400]);
+                        onAddRecordRef.current({
+                            id: Date.now().toString(),
+                            type: 'timer',
+                            label: `${timerMinsRef.current}${t('counter.minShort')} ${t('counter.timerSession')}`,
+                            startTime: timerStartRef.current || nowISO(),
+                            duration: timerTargetRef.current,
+                            notes: [],
+                        });
+                        return 0;
+                    }
+                    return next;
+                });
+            }
+        }, 500);
         return () => clearInterval(id);
     }, [timerRunning]);
 
@@ -300,7 +339,7 @@ export default function CounterModal({
                         </TouchableOpacity>
                     )}
                     <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                        <Text style={[styles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
+                        <Feather name="x" size={24} color={colors.textMuted} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -309,9 +348,9 @@ export default function CounterModal({
 
     function renderTabBar() {
         const tabs = [
-            { key: 'pomodoro', icon: '🍅', label: 'Pomodoro' },
-            { key: 'stopwatch', icon: '⏱️', label: t('counter.stopwatch') },
-            { key: 'timer', icon: '⏳', label: t('counter.timer') },
+            { key: 'pomodoro', icon: 'coffee', label: 'Pomodoro' },
+            { key: 'stopwatch', icon: 'watch', label: t('counter.stopwatch') },
+            { key: 'timer', icon: 'clock', label: t('counter.timer') },
         ];
         return (
             <View style={[styles.tabBar, { backgroundColor: colors.surface2, borderColor: colors.border }]}>
@@ -325,7 +364,7 @@ export default function CounterModal({
                         onPress={() => setTab(tb.key)}
                         activeOpacity={0.75}
                     >
-                        <Text style={styles.tabBtnIcon}>{tb.icon}</Text>
+                        <Feather name={tb.icon} size={20} color={tab === tb.key ? colors.text : colors.textMuted} />
                         <Text style={[styles.tabBtnText, { color: tab === tb.key ? colors.text : colors.textMuted }]}>
                             {tb.label}
                         </Text>
@@ -410,7 +449,7 @@ export default function CounterModal({
                             onPress={swSave}
                             activeOpacity={0.8}
                         >
-                            <Text style={[styles.ctrlBtnText, { color: isDark ? colors.accent : '#5A4800' }]}>
+                            <Text style={[styles.ctrlBtnText, { color: isDark ? colors.accent : colors.accentDark }]}>
                                 {t('counter.save')}
                             </Text>
                         </TouchableOpacity>
@@ -515,9 +554,9 @@ export default function CounterModal({
 
         const typeFilters = [
             { key: 'all', label: t('counter.filterAll') },
-            { key: 'pomodoro', label: '🍅 Pomodoro' },
-            { key: 'stopwatch', label: `⏱️ ${t('counter.stopwatch')}` },
-            { key: 'timer', label: `⏳ ${t('counter.timer')}` },
+            { key: 'pomodoro', label: 'Pomodoro' },
+            { key: 'stopwatch', label: t('counter.stopwatch') },
+            { key: 'timer', label: t('counter.timer') },
         ];
         const dateFilters = [
             { key: 'all', label: t('counter.filterAll') },
@@ -525,7 +564,7 @@ export default function CounterModal({
             { key: 'week', label: t('counter.filterWeek') },
             { key: 'month', label: t('counter.filterMonth') },
         ];
-        const pickedLabel = `📅 ${pad2(filterPickedDate.getDate())}.${pad2(filterPickedDate.getMonth() + 1)}.${filterPickedDate.getFullYear()}`;
+        const pickedLabel = `${pad2(filterPickedDate.getDate())}.${pad2(filterPickedDate.getMonth() + 1)}.${filterPickedDate.getFullYear()}`;
 
 
         return (
@@ -547,7 +586,7 @@ export default function CounterModal({
                                 activeOpacity={0.75}
                             >
                                 <Text style={[styles.filterChipText,
-                                { color: filterType === f.key ? (isDark ? colors.accent : '#5A4800') : colors.textMuted },
+                                { color: filterType === f.key ? (isDark ? colors.accent : colors.accentDark) : colors.textMuted },
                                 filterType === f.key && { fontWeight: '700' },
                                 ]}>
                                     {f.label}
@@ -574,7 +613,7 @@ export default function CounterModal({
                                 activeOpacity={0.75}
                             >
                                 <Text style={[styles.filterChipText,
-                                { color: filterDate === f.key ? (isDark ? colors.accent : '#5A4800') : colors.textMuted },
+                                { color: filterDate === f.key ? (isDark ? colors.accent : colors.accentDark) : colors.textMuted },
                                 filterDate === f.key && { fontWeight: '700' },
                                 ]}>
                                     {f.label}
@@ -592,7 +631,7 @@ export default function CounterModal({
                             activeOpacity={0.75}
                         >
                             <Text style={[styles.filterChipText,
-                            { color: filterDate === 'pick' ? (isDark ? colors.accent : '#5A4800') : colors.textMuted },
+                            { color: filterDate === 'pick' ? (isDark ? colors.accent : colors.accentDark) : colors.textMuted },
                             filterDate === 'pick' && { fontWeight: '700' },
                             ]}>
                                 {filterDate === 'pick' ? pickedLabel : t('counter.filterPick')}
@@ -627,7 +666,9 @@ export default function CounterModal({
                 <ScrollView style={styles.listScroll} showsVerticalScrollIndicator={false}>
                     {filtered.length === 0 ? (
                         <View style={styles.emptyWrap}>
-                            <Text style={styles.emptyIcon}>🕐</Text>
+                            <View style={[styles.emptyIconWrap, { backgroundColor: colors.surface2 }]}>
+                                <Feather name="clock" size={24} color={colors.textMuted} />
+                            </View>
                             <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('counter.noRecords')}</Text>
                         </View>
                     ) : filtered.map(r => (
@@ -655,7 +696,7 @@ export default function CounterModal({
                                 )}
                                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
-                                <Text style={[styles.deleteBtnText, { color: isDark ? '#FF7A5A' : '#E05A2B' }]}>🗑</Text>
+                                <Feather name="trash-2" size={16} color={isDark ? '#FF7A5A' : '#E05A2B'} />
                             </TouchableOpacity>
                             <Text style={[styles.recordArrow, { color: colors.textLight }]}>›</Text>
                         </TouchableOpacity>
@@ -672,7 +713,7 @@ export default function CounterModal({
         return (
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior="padding"
                 keyboardVerticalOffset={0}
             >
                 <ScrollView
@@ -740,7 +781,7 @@ export default function CounterModal({
                         disabled={!noteText.trim()}
                     >
                         <Text style={[styles.noteSendBtnText, { color: noteText.trim() ? '#1A1A00' : colors.textMuted }]}>
-                            {editingNoteId ? '✓' : '↑'}
+                            <Feather name={editingNoteId ? "check" : "arrow-up"} size={16} color={isDark ? colors.accent : colors.accentDark} />
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -875,7 +916,7 @@ const styles = StyleSheet.create({
     // records list
     listScroll: { flex: 1 },
     emptyWrap: { alignItems: 'center', paddingTop: 80, gap: Spacing.md },
-    emptyIcon: { fontSize: 48 },
+    emptyIconWrap: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
     emptyText: { fontSize: Typography.base },
 
     recordRow: {

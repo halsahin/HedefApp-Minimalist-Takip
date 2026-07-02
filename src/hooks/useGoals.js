@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { generateId, calcRemainingDays } from '../utils/dateUtils';
 import { TURKISH_LABEL_TO_KEY } from '../constants/categories';
+import { syncToDrive } from '../utils/googleDrive';
 
 const STORAGE_KEY_V1 = 'goaltracker_v1';
 const STORAGE_KEY_V2 = 'goaltracker_v2';
@@ -87,6 +88,16 @@ export function useGoals(activeFolderId = null) {
         if (isFirstRender.current) { isFirstRender.current = false; return; }
         AsyncStorage.setItem(STORAGE_KEY_V2, JSON.stringify(goals)).catch(err => {
             console.error('[useGoals] save error:', err);
+        });
+
+        // Auto sync with Google Drive if enabled
+        AsyncStorage.getItem('drive_autosync').then(autoSync => {
+            if (autoSync === 'true') {
+                AsyncStorage.getItem('goaltracker_folders_v1').then(foldersRaw => {
+                    const folders = foldersRaw ? JSON.parse(foldersRaw) : [];
+                    syncToDrive(goals, folders).catch(err => console.log('Auto-sync error:', err));
+                });
+            }
         });
     }, [goals, loaded]);
 

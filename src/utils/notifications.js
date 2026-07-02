@@ -12,31 +12,15 @@ async function getNotifications() {
 }
 
 function makeTrigger(N, triggerDate, seconds) {
-    const CalendarType = N.SchedulableTriggerInputTypes?.CALENDAR;
     const DateType = N.SchedulableTriggerInputTypes?.DATE;
-    const IntervalType = N.SchedulableTriggerInputTypes?.TIME_INTERVAL;
 
-    // CALENDAR is the most reliable on Android — uses exact date/time components
-    if (CalendarType) {
-        return {
-            type: CalendarType,
-            year: triggerDate.getFullYear(),
-            month: triggerDate.getMonth() + 1,
-            day: triggerDate.getDate(),
-            hour: triggerDate.getHours(),
-            minute: triggerDate.getMinutes(),
-            second: 0,
-            repeats: false,
-            channelId: 'goal-reminders',
-        };
-    }
+    // Use standard Date trigger which is supported on both platforms
     if (DateType) {
         return { type: DateType, date: triggerDate, channelId: 'goal-reminders' };
     }
-    if (IntervalType) {
-        return { type: IntervalType, seconds, repeats: false, channelId: 'goal-reminders' };
-    }
-    return { seconds, channelId: 'goal-reminders' };
+    
+    // Fallback if needed
+    return { date: triggerDate, channelId: 'goal-reminders' };
 }
 
 export async function setupNotifications() {

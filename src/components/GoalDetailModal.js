@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Typography, Spacing, Radii, Shadows } from '../constants/theme';
+import { Feather } from '@expo/vector-icons';
 import { CATEGORIES, CATEGORY_ICON_MAP, getCategoryLabel } from '../constants/categories';
 import { calcRemainingDays, formatDate, deadlineFromDays } from '../utils/dateUtils';
 import { addGoalToCalendar } from '../utils/calendar';
@@ -149,7 +150,7 @@ export default function GoalDetailModal({
 
     const days = calcRemainingDays(goal.deadline);
     const overdue = !goal.completed && days < 0;
-    const icon = CATEGORY_ICON_MAP[goal.category] || '📌';
+    const icon = CATEGORY_ICON_MAP[goal.category] || 'bookmark';
     const stripColor = goal.completed ? colors.success : goal.pinned ? colors.accentDark : overdue ? colors.danger : colors.accent;
     const formattedEditDate = editDate.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -165,7 +166,7 @@ export default function GoalDetailModal({
 
     return (
         <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-            <KeyboardAvoidingView style={[styles.root, { backgroundColor: colors.bg }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            <KeyboardAvoidingView style={[styles.root, { backgroundColor: colors.bg }]} behavior="padding">
 
                 {/* Top bar */}
                 <View style={[styles.topBar, { borderBottomColor: stripColor, backgroundColor: colors.surface }]}>
@@ -218,11 +219,14 @@ export default function GoalDetailModal({
                                                     onPress={() => setEditCategory(cat.key)}
                                                     activeOpacity={0.75}
                                                 >
-                                                    <Text style={[styles.catChipText, { color: colors.textMuted },
-                                                        active && { fontWeight: '700', color: isDark ? colors.accent : '#5A4800' }
-                                                    ]}>
-                                                        {cat.icon} {t(`cat.${cat.key}`)}
-                                                    </Text>
+                                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                        <Feather name={cat.icon} size={14} color={active ? colors.accentDark : colors.textMuted} />
+                                                        <Text style={[styles.catChipText, { color: colors.textMuted, marginLeft: 6 },
+                                                            active && { fontWeight: '700', color: isDark ? colors.accent : colors.accentDark }
+                                                        ]}>
+                                                            {t(`cat.${cat.key}`)}
+                                                        </Text>
+                                                    </View>
                                                 </TouchableOpacity>
                                             );
                                         })}
@@ -253,7 +257,10 @@ export default function GoalDetailModal({
                                                 onPress={() => setShowDatePicker(v => !v)}
                                                 activeOpacity={0.8}
                                             >
-                                                <Text style={[styles.dateTriggerText, { color: colors.text }]}>📅 {formattedEditDate}</Text>
+                                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                    <Feather name="calendar" size={16} color={colors.text} />
+                                                    <Text style={[styles.dateTriggerText, { color: colors.text, marginLeft: 6 }]}>{formattedEditDate}</Text>
+                                                </View>
                                                 <Text style={[styles.dateTriggerArrow, { color: colors.textMuted }]}>{showDatePicker ? '▴' : '▾'}</Text>
                                             </TouchableOpacity>
                                             {showDatePicker && (
@@ -299,7 +306,7 @@ export default function GoalDetailModal({
                                                 activeOpacity={0.75}
                                             >
                                                 <Text style={[styles.progressBtnText, { color: colors.textMuted },
-                                                    editProgress === p && { fontWeight: '700', color: isDark ? colors.accent : '#5A4800' }
+                                                    editProgress === p && { fontWeight: '700', color: isDark ? colors.accent : colors.accentDark }
                                                 ]}>{p}%</Text>
                                             </TouchableOpacity>
                                         ))}
@@ -320,7 +327,7 @@ export default function GoalDetailModal({
                                                     )}
                                                     activeOpacity={0.75}
                                                 >
-                                                    <Text style={[styles.reminderChipText, { color: active ? (isDark ? colors.accent : '#5A4800') : colors.textMuted },
+                                                    <Text style={[styles.reminderChipText, { color: active ? (isDark ? colors.accent : colors.accentDark) : colors.textMuted },
                                                         active && { fontWeight: '700' }
                                                     ]}>
                                                         {t(`reminder.${days}`)}
@@ -335,8 +342,8 @@ export default function GoalDetailModal({
                                                 onPress={() => setEditReminderDays(prev => prev.filter(d => d !== days))}
                                                 activeOpacity={0.75}
                                             >
-                                                <Text style={[styles.reminderChipText, { color: isDark ? colors.accent : '#5A4800', fontWeight: '700' }]}>
-                                                    {t('reminder.custom', { n: days })} ✕
+                                                <Text style={[styles.reminderChipText, { color: isDark ? colors.accent : colors.accentDark, fontWeight: '700' }]}>
+                                                    {t('reminder.custom', { n: days })} <Feather name="x" size={12} color={active ? colors.accentDark : colors.textMuted} />
                                                 </Text>
                                             </TouchableOpacity>
                                         ))}
@@ -370,7 +377,7 @@ export default function GoalDetailModal({
                                             }}
                                             activeOpacity={0.75}
                                         >
-                                            <Text style={{ color: isDark ? colors.accent : '#5A4800', fontWeight: '700', fontSize: 18 }}>+</Text>
+                                            <Text style={{ color: isDark ? colors.accent : colors.accentDark, fontWeight: '700', fontSize: 18 }}>+</Text>
                                         </TouchableOpacity>
                                     </View>
 
@@ -387,17 +394,24 @@ export default function GoalDetailModal({
                                         textAlignVertical="top"
                                     />
 
-                                    <TouchableOpacity style={styles.saveBtn} onPress={saveGoalEdit} activeOpacity={0.8}>
-                                        <Text style={styles.saveBtnText}>{t('detail.save')}</Text>
+                                    <TouchableOpacity 
+                                        style={[styles.saveBtn, { backgroundColor: colors.accent, shadowColor: colors.accent }]} 
+                                        onPress={saveGoalEdit} 
+                                        activeOpacity={0.8}
+                                    >
+                                        <Text style={[styles.saveBtnText, { color: colors.bg }]}>{t('detail.save')}</Text>
                                     </TouchableOpacity>
                                 </>
                             ) : (
                                 <>
                                     <View style={styles.categoryRow}>
                                         <View style={[styles.categoryBadge, { backgroundColor: colors.bg, borderColor: colors.border }]}>
-                                            <Text style={[styles.categoryBadgeText, { color: colors.textMuted }]}>
-                                                {icon} {getCategoryLabel(goal.category, t)}
-                                            </Text>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                <Feather name={icon} size={12} color={colors.textMuted} />
+                                                <Text style={[styles.categoryBadgeText, { color: colors.textMuted, marginLeft: 4 }]}>
+                                                    {getCategoryLabel(goal.category, t)}
+                                                </Text>
+                                            </View>
                                         </View>
                                         {goal.completed && (
                                             <View style={[styles.doneBadge, { backgroundColor: colors.successSoft }]}>
@@ -406,7 +420,10 @@ export default function GoalDetailModal({
                                         )}
                                         {goal.recurring && (
                                             <View style={[styles.doneBadge, { backgroundColor: colors.accentBg }]}>
-                                                <Text style={[styles.doneBadgeText, { color: isDark ? colors.accent : '#5A4800' }]}>🔁 {t('detail.recurring')}</Text>
+                                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                    <Feather name="repeat" size={10} color={isDark ? colors.accent : colors.accentDark} />
+                                                    <Text style={[styles.doneBadgeText, { color: isDark ? colors.accent : colors.accentDark, marginLeft: 4 }]}>{t('detail.recurring')}</Text>
+                                                </View>
                                             </View>
                                         )}
                                     </View>
@@ -453,7 +470,10 @@ export default function GoalDetailModal({
                                     </View>
 
                                     <View style={[styles.infoRow, { borderBottomColor: colors.border }]}>
-                                        <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{t('detail.remaining')}</Text>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                            <Feather name="clock" size={14} color={colors.textMuted} />
+                                            <Text style={[styles.infoLabel, { color: colors.textMuted, marginLeft: 6 }]}>{t('detail.remaining')}</Text>
+                                        </View>
                                         <Text style={[styles.infoValue, { color: colors.text },
                                             overdue && { color: colors.danger },
                                             goal.completed && { color: colors.success },
@@ -474,7 +494,7 @@ export default function GoalDetailModal({
                                             onPress={async () => {
                                                 const result = await addGoalToCalendar(goal);
                                                 if (result === 'ok') {
-                                                    Alert.alert('📅', t('calendar.addedToCalendar'));
+                                                    Alert.alert('', t('calendar.addedToCalendar'));
                                                 } else if (result === 'denied') {
                                                     Alert.alert('', t('calendar.calendarDenied'));
                                                 } else if (result === 'unavailable') {
@@ -517,13 +537,13 @@ export default function GoalDetailModal({
                                         onPress={() => onToggleSubtask(goal.id, s.id)}
                                         activeOpacity={0.7}
                                     >
-                                        {s.completed && <Text style={styles.subtaskCheckMark}>✓</Text>}
+                                        {s.completed && <Feather name="check" size={14} color={colors.success} style={styles.subtaskCheckMark} />}
                                     </TouchableOpacity>
                                     <Text style={[styles.subtaskText, { color: s.completed ? colors.textMuted : colors.text },
                                         s.completed && { textDecorationLine: 'line-through' }
                                     ]}>{s.text}</Text>
                                     <TouchableOpacity onPress={() => onDeleteSubtask(goal.id, s.id)} activeOpacity={0.7}>
-                                        <Text style={{ color: colors.danger, fontSize: 14, paddingHorizontal: 4 }}>✕</Text>
+                                        <Feather name="x" size={14} color={colors.danger} style={{ paddingHorizontal: 4 }} />
                                     </TouchableOpacity>
                                 </View>
                             ))}
@@ -543,7 +563,7 @@ export default function GoalDetailModal({
                                     onPress={handleAddSubtask}
                                     activeOpacity={0.75}
                                 >
-                                    <Text style={{ color: isDark ? colors.accent : '#5A4800', fontWeight: '700', fontSize: 18 }}>+</Text>
+                                    <Text style={{ color: isDark ? colors.accent : colors.accentDark, fontWeight: '700', fontSize: 18 }}>+</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -551,8 +571,12 @@ export default function GoalDetailModal({
 
                     {/* Add update button */}
                     {!isEditingGoal && (
-                        <TouchableOpacity style={styles.addUpdateBtn} onPress={openAddUpdate} activeOpacity={0.8}>
-                            <Text style={styles.addUpdateBtnText}>{t('detail.addUpdate')}</Text>
+                        <TouchableOpacity 
+                            style={[styles.addUpdateBtn, { backgroundColor: colors.accent, shadowColor: colors.accent }]} 
+                            onPress={openAddUpdate} 
+                            activeOpacity={0.8}
+                        >
+                            <Text style={[styles.addUpdateBtnText, { color: colors.bg }]}>{t('detail.addUpdate')}</Text>
                         </TouchableOpacity>
                     )}
 
@@ -578,8 +602,11 @@ export default function GoalDetailModal({
                                 <TouchableOpacity style={[styles.inputActionBtn, { borderWidth: 1, borderColor: colors.border }]} onPress={cancelUpdateInput}>
                                     <Text style={[styles.inputActionBtnOutlineText, { color: colors.textMuted }]}>{t('detail.cancel')}</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={[styles.inputActionBtn, styles.inputActionBtnFill]} onPress={saveAddUpdate}>
-                                    <Text style={styles.inputActionBtnFillText}>{t('detail.save2')}</Text>
+                                <TouchableOpacity 
+                                    style={[styles.inputActionBtn, styles.inputActionBtnFill, { backgroundColor: colors.accent, shadowColor: colors.accent }]} 
+                                    onPress={saveAddUpdate}
+                                >
+                                    <Text style={[styles.inputActionBtnFillText, { color: colors.bg }]}>{t('detail.save2')}</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -587,7 +614,9 @@ export default function GoalDetailModal({
 
                     {(!goal.updates || goal.updates.length === 0) && updateInput.mode !== 'add' ? (
                         <View style={[styles.emptyUpdates, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                            <Text style={styles.emptyUpdatesIcon}>📓</Text>
+                            <View style={[styles.emptyUpdatesIconWrap, { backgroundColor: colors.surface2 }]}>
+                                <Feather name="book-open" size={24} color={colors.textMuted} />
+                            </View>
                             <Text style={[styles.emptyUpdatesText, { color: colors.textMuted }]}>{t('detail.emptyUpdates')}</Text>
                             <Text style={[styles.emptyUpdatesHint, { color: colors.textLight }]}>{t('detail.emptyHint')}</Text>
                         </View>
@@ -607,8 +636,11 @@ export default function GoalDetailModal({
                                             <TouchableOpacity style={[styles.inputActionBtn, { borderWidth: 1, borderColor: colors.border }]} onPress={cancelUpdateInput}>
                                                 <Text style={[styles.inputActionBtnOutlineText, { color: colors.textMuted }]}>{t('detail.cancel')}</Text>
                                             </TouchableOpacity>
-                                            <TouchableOpacity style={[styles.inputActionBtn, styles.inputActionBtnFill]} onPress={saveEditUpdate}>
-                                                <Text style={styles.inputActionBtnFillText}>{t('detail.update')}</Text>
+                                            <TouchableOpacity 
+                                                style={[styles.inputActionBtn, styles.inputActionBtnFill, { backgroundColor: colors.accent, shadowColor: colors.accent }]} 
+                                                onPress={saveEditUpdate}
+                                            >
+                                                <Text style={[styles.inputActionBtnFillText, { color: colors.bg }]}>{t('detail.update')}</Text>
                                             </TouchableOpacity>
                                         </View>
                                     </View>
@@ -623,7 +655,7 @@ export default function GoalDetailModal({
                                                 {new Date(upd.date).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
                                             </Text>
                                             <TouchableOpacity onPress={() => confirmDeleteUpdate(upd.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                                                <Text style={styles.updateDeleteIcon}>🗑</Text>
+                                                <Feather name="trash-2" size={16} color={colors.danger} style={styles.updateDeleteIcon} />
                                             </TouchableOpacity>
                                         </View>
                                         <Text style={[styles.updateText, { color: colors.text }]}>{upd.text}</Text>
@@ -711,8 +743,8 @@ const styles = StyleSheet.create({
     progressBtns: { flexDirection: 'row', gap: Spacing.xs, flexWrap: 'wrap', marginBottom: Spacing.sm },
     progressBtn: { paddingHorizontal: Spacing.md, paddingVertical: 6, borderRadius: Radii.full, borderWidth: 1 },
     progressBtnText: { fontSize: Typography.sm, fontWeight: '500' },
-    saveBtn: { marginTop: Spacing.md, backgroundColor: '#F9E55A', paddingVertical: Spacing.sm + 4, borderRadius: Radii.md, alignItems: 'center', shadowColor: '#F9E55A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.35, shadowRadius: 6, elevation: 2 },
-    saveBtnText: { fontSize: Typography.base - 1, fontWeight: '700', color: '#5A4800' },
+    saveBtn: { marginTop: Spacing.md, paddingVertical: Spacing.sm + 4, borderRadius: Radii.md, alignItems: 'center', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.35, shadowRadius: 6, elevation: 2 },
+    saveBtnText: { fontSize: Typography.base - 1, fontWeight: '700' },
     sectionCard: { borderRadius: Radii.md, borderWidth: 1, padding: Spacing.md, marginBottom: Spacing.md },
     sectionTitle: { fontSize: Typography.base, fontWeight: '700', marginBottom: Spacing.md },
     sectionCount: { fontWeight: '400' },
@@ -724,10 +756,10 @@ const styles = StyleSheet.create({
     subtaskInputRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginTop: Spacing.sm },
     subtaskInput: { flex: 1, borderWidth: 1, borderRadius: Radii.sm, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, fontSize: Typography.sm },
     addSubBtn: { borderWidth: 1, borderRadius: Radii.sm, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-    addUpdateBtn: { backgroundColor: '#F9E55A', paddingVertical: Spacing.sm + 4, borderRadius: Radii.md, alignItems: 'center', marginBottom: Spacing.lg, shadowColor: '#F9E55A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.35, shadowRadius: 6, elevation: 2 },
-    addUpdateBtnText: { fontSize: Typography.base - 1, fontWeight: '700', color: '#5A4800' },
+    addUpdateBtn: { paddingVertical: Spacing.sm + 4, borderRadius: Radii.md, alignItems: 'center', marginBottom: Spacing.lg, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.35, shadowRadius: 6, elevation: 2 },
+    addUpdateBtnText: { fontSize: Typography.base - 1, fontWeight: '700' },
     emptyUpdates: { alignItems: 'center', paddingVertical: Spacing.xl, borderRadius: Radii.md, borderWidth: 1, borderStyle: 'dashed' },
-    emptyUpdatesIcon: { fontSize: 32, marginBottom: Spacing.sm },
+    emptyUpdatesIconWrap: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.sm },
     emptyUpdatesText: { fontSize: Typography.sm, fontWeight: '600' },
     emptyUpdatesHint: { fontSize: Typography.xs, marginTop: 4 },
     updateInputCard: { borderRadius: Radii.md, borderWidth: 1.5, padding: Spacing.md, marginBottom: Spacing.sm, ...Shadows.sm },
@@ -735,8 +767,8 @@ const styles = StyleSheet.create({
     updateInputActions: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.sm },
     inputActionBtn: { flex: 1, paddingVertical: Spacing.sm + 2, borderRadius: Radii.md, alignItems: 'center' },
     inputActionBtnOutlineText: { fontSize: Typography.sm, fontWeight: '600' },
-    inputActionBtnFill: { flex: 2, backgroundColor: '#F9E55A', shadowColor: '#F9E55A', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 2 },
-    inputActionBtnFillText: { fontSize: Typography.sm, fontWeight: '700', color: '#5A4800' },
+    inputActionBtnFill: { flex: 2, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 2 },
+    inputActionBtnFillText: { fontSize: Typography.sm, fontWeight: '700' },
     reminderChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginBottom: Spacing.sm },
     reminderChip: { paddingHorizontal: Spacing.sm + 2, paddingVertical: Spacing.xs + 2, borderRadius: Radii.full, borderWidth: 1 },
     reminderChipText: { fontSize: Typography.sm, fontWeight: '500' },

@@ -1,6 +1,7 @@
 # HedefApp — BUGS.md
 
-Tüm hatalar analiz edilip düzeltilmiştir. Düzeltilemeyen veya kısmi kalan madde **bulunmamaktadır.**
+| ID | Dosya | Hata Açıklaması |
+|----|-------|-----------------|
 
 ---
 
@@ -24,3 +25,8 @@ Tüm hatalar analiz edilip düzeltilmiştir. Düzeltilemeyen veya kısmi kalan m
 | BUG-14 | `useGoals.js`, `useFolders.js`, `App.js` | `moveGoalsToDefaultFolder(folderId)` fonksiyonu eklendi; `handleDeleteFolder` wrapper'ı ile klasör silinmeden önce içindeki hedefler `'default'`'a taşınıyor |
 | BUG-15 | `GoalDetailModal.js` | `hasTimeline` zaten `!goal.completed` kontrolü yapıyordu; `!!` ile tip güvenliği sağlandı |
 | BUG-16 | `StatsModal.js`, `CalendarModal.js`, `CounterModal.js` | Header stillerine `paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + Spacing.md : 44 + Spacing.md` eklendi; status bar overlap düzeltildi |
+| BUG-17 | `CalendarModal.js` | Kullanılmayan `today` değişkeni kaldırıldı. |
+| BUG-18 | `useGoals.js` | `createNextInstance` fonksiyonunda yeni tarih (`newDeadline`) atanırken, `toISOString()` yerine yerel zamanı baz alan format (örn. `getFullYear`, `getMonth`, `getDate`) kullanıldı. |
+| BUG-19 | `EmptyState.js` | Ekleme (CTA) butonundaki hardcode renkler kaldırılarak temanın dinamik `colors.accent` ve `colors.accentDark` renkleri kullanıldı. |
+| BUG-20 | `CounterModal.js` | Sayaçlarda (Pomodoro, Kronometre, Zamanlayıcı) `time-diffing` (zaman farkı) yöntemine geçildi ve modal kapandığında çalışan otomatik sıfırlama (`fullReset()`) kaldırıldı. Böylece uygulama arka plandayken veya modal kapalıyken bile sayaçların çalışmaya devam etmesi sağlandı. |
+| BUG-21 | `app.config.js`, `package.json` | EAS Build `.gitignore` içindeki `android/` dizinini yoksaydığı için Proguard kuralları bulut derlemesine (production) geçmiyordu ve `NoSuchMethodError` (ReturnTypeKt vb.) kaynaklı çökmeler devam ediyordu. `expo-build-properties` paketi kurularak `extraProguardRules` ile eksik kurallar doğrudan `app.config.js` içine eklendi. |

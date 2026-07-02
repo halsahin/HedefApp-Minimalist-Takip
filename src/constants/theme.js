@@ -9,10 +9,10 @@ export const LightColors = {
     textMuted: '#7A7A9A',
     textLight: '#ADADC8',
 
-    accent: '#F9E55A',
-    accentDark: '#E0C828',
-    accentBg: '#FFFCE8',
-    accentGlow: 'rgba(249,229,90,0.25)',
+    accent: '#06B6D4',
+    accentDark: '#0891B2',
+    accentBg: '#ECFEFF',
+    accentGlow: 'rgba(6,182,212,0.25)',
 
     danger: '#FF6B6B',
     dangerSoft: '#FFF0F0',
@@ -24,20 +24,20 @@ export const LightColors = {
 };
 
 export const DarkColors = {
-    bg: '#0F0F1A',
-    surface: '#1A1A2E',
-    surface2: '#22223A',
-    border: '#2E2E4E',
-    borderSoft: '#252540',
+    bg: '#000000',
+    surface: '#222222',
+    surface2: '#2A2A2A',
+    border: '#444444',
+    borderSoft: '#333333',
 
-    text: '#E8E8F4',
-    textMuted: '#9898B8',
-    textLight: '#5A5A7A',
+    text: '#CCCCCC',
+    textMuted: '#999999',
+    textLight: '#777777',
 
-    accent: '#F9E55A',
-    accentDark: '#E0C828',
-    accentBg: '#2A2510',
-    accentGlow: 'rgba(249,229,90,0.15)',
+    accent: '#888888',
+    accentDark: '#666666',
+    accentBg: '#333333',
+    accentGlow: 'rgba(136,136,136,0.15)',
 
     danger: '#FF7A7A',
     dangerSoft: '#2A1515',

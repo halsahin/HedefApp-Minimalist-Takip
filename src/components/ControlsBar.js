@@ -46,7 +46,7 @@ export default function ControlsBar({ sortBy, onSortChange, onAddPress }) {
                                     activeOpacity={0.75}
                                 >
                                     <Text style={[styles.dropdownText, { color: colors.text },
-                                    opt.key === sortBy && { fontWeight: '700', color: '#5A4800' }
+                                    opt.key === sortBy && { fontWeight: '700', color: colors.accentDark }
                                     ]}>
                                         {t(opt.tKey)}
                                     </Text>
@@ -57,8 +57,12 @@ export default function ControlsBar({ sortBy, onSortChange, onAddPress }) {
                 </View>
             </View>
 
-            <TouchableOpacity style={styles.addBtn} onPress={onAddPress} activeOpacity={0.8}>
-                <Text style={styles.addBtnText}>{t('btn.newGoal')}</Text>
+            <TouchableOpacity 
+                style={[styles.addBtn, { backgroundColor: colors.accent, shadowColor: colors.accent }]} 
+                onPress={onAddPress} 
+                activeOpacity={0.8}
+            >
+                <Text style={[styles.addBtnText, { color: colors.bg }]}>{t('btn.newGoal')}</Text>
             </TouchableOpacity>
         </View>
     );
@@ -112,15 +116,13 @@ const styles = StyleSheet.create({
     },
     dropdownText: { fontSize: Typography.sm },
     addBtn: {
-        backgroundColor: '#F9E55A',
         borderRadius: Radii.md,
         paddingHorizontal: Spacing.md,
         paddingVertical: 8,
-        shadowColor: '#F9E55A',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.4,
         shadowRadius: 8,
         elevation: 3,
     },
-    addBtnText: { fontSize: Typography.sm, fontWeight: '700', color: '#5A4800' },
+    addBtnText: { fontSize: Typography.sm, fontWeight: '700' },
 });

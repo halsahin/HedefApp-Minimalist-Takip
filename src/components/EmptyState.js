@@ -3,8 +3,14 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import { Typography, Spacing, Radii, Shadows } from '../constants/theme';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { Feather } from '@expo/vector-icons';
 
-const FEATURES = ['f1', 'f2', 'f3', 'f4'];
+const FEATURE_ICONS = {
+    f1: 'plus-circle',
+    f2: 'smartphone',
+    f3: 'bell',
+    f4: 'trending-up'
+};
 
 export default function EmptyState({ onAddPress }) {
     const { t } = useLanguage();
@@ -18,19 +24,23 @@ export default function EmptyState({ onAddPress }) {
         >
             {/* Hero */}
             <View style={styles.hero}>
-                <Text style={styles.heroIcon}>🎯</Text>
+                <View style={[styles.heroIconWrap, { backgroundColor: colors.surface2, borderColor: colors.border }]}>
+                    <Feather name="target" size={40} color={isDark ? colors.accent : colors.accentDark} />
+                </View>
                 <Text style={[styles.title, { color: colors.text }]}>{t('empty.title')}</Text>
                 <Text style={[styles.desc, { color: colors.textMuted }]}>{t('empty.desc')}</Text>
             </View>
 
             {/* Feature cards */}
             <View style={styles.features}>
-                {FEATURES.map(key => (
+                {Object.keys(FEATURE_ICONS).map(key => (
                     <View
                         key={key}
                         style={[styles.featureCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
                     >
-                        <Text style={styles.featureIcon}>{t(`empty.${key}.icon`)}</Text>
+                        <View style={[styles.featureIconWrap, { backgroundColor: colors.surface2 }]}>
+                            <Feather name={FEATURE_ICONS[key]} size={20} color={colors.textMuted} />
+                        </View>
                         <View style={styles.featureText}>
                             <Text style={[styles.featureTitle, { color: colors.text }]}>
                                 {t(`empty.${key}.title`)}
@@ -44,8 +54,12 @@ export default function EmptyState({ onAddPress }) {
             </View>
 
             {/* CTA */}
-            <TouchableOpacity style={styles.btn} onPress={onAddPress} activeOpacity={0.8}>
-                <Text style={styles.btnText}>{t('empty.btn')}</Text>
+            <TouchableOpacity 
+                style={[styles.btn, { backgroundColor: colors.accent, shadowColor: colors.accent }]} 
+                onPress={onAddPress} 
+                activeOpacity={0.8}
+            >
+                <Text style={[styles.btnText, { color: colors.bg }]}>{t('empty.btn')}</Text>
             </TouchableOpacity>
         </ScrollView>
     );
@@ -61,9 +75,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: Spacing.xl,
     },
-    heroIcon: {
-        fontSize: 64,
+    heroIconWrap: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
         marginBottom: Spacing.md,
+        borderWidth: 1,
     },
     title: {
         fontSize: Typography.lg,
@@ -91,10 +110,12 @@ const styles = StyleSheet.create({
         gap: Spacing.md,
         ...Shadows.sm,
     },
-    featureIcon: {
-        fontSize: 28,
-        width: 36,
-        textAlign: 'center',
+    featureIconWrap: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     featureText: {
         flex: 1,
@@ -109,11 +130,9 @@ const styles = StyleSheet.create({
         lineHeight: 18,
     },
     btn: {
-        backgroundColor: '#F9E55A',
         borderRadius: Radii.md,
         paddingVertical: Spacing.md,
         alignItems: 'center',
-        shadowColor: '#F9E55A',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.4,
         shadowRadius: 8,
@@ -122,6 +141,5 @@ const styles = StyleSheet.create({
     btnText: {
         fontSize: Typography.base,
         fontWeight: '700',
-        color: '#5A4800',
     },
 });
